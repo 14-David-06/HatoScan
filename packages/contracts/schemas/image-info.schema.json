@@ -1,0 +1,12 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ImageInfo",
+  "description": "Dimensiones de la imagen original, en píxeles.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["width", "height"],
+  "properties": {
+    "width": { "type": "integer", "minimum": 1 },
+    "height": { "type": "integer", "minimum": 1 }
+  }
+}

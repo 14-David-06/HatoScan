@@ -1,0 +1,25 @@
+{
+  "name": "@hatoscan/contracts",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Contratos compartidos (JSON Schema) y validadores Zod generados.",
+  "exports": {
+    ".": "./src/index.ts",
+    "./schemas/*": "./schemas/*"
+  },
+  "scripts": {
+    "generate": "node scripts/generate-zod.mjs && prettier --write src/generated",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "peerDependencies": {
+    "zod": "^3.25.76"
+  },
+  "devDependencies": {
+    "@apidevtools/json-schema-ref-parser": "^16.0.3",
+    "@types/node": "^26.6.2",
+    "json-schema-to-zod": "^2.8.1",
+    "vitest": "^5.0.1"
+  }
+}

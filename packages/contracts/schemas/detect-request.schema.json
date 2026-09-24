@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "DetectRequest",
+  "description": "Petición al servicio de detección. La imagen se entrega por URL firmada (nunca se sube a través de Vercel).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["conteo_id", "image_url"],
+  "properties": {
+    "conteo_id": { "type": "string", "pattern": "^SIRIUS-CONTEO-[0-9]{4,}$" },
+    "image_url": { "type": "string", "format": "uri" },
+    "detector": {
+      "type": "string",
+      "description": "Nombre del detector a usar. Si se omite, el servicio usa su detector por defecto.",
+      "minLength": 1
+    },
+    "params": {
+      "type": "object",
+      "description": "Parámetros específicos del detector. Se validan dentro del servicio.",
+      "additionalProperties": true
+    }
+  }
+}

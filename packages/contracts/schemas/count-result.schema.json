@@ -1,0 +1,34 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "CountResult",
+  "description": "Salida del detector para un conteo. Es la propuesta del modelo; nunca es el dato oficial.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "conteo_id",
+    "detector_version",
+    "params",
+    "params_hash",
+    "image",
+    "detections",
+    "total"
+  ],
+  "properties": {
+    "conteo_id": { "type": "string", "pattern": "^SIRIUS-CONTEO-[0-9]{4,}$" },
+    "detector_version": {
+      "type": "string",
+      "description": "Nombre y versión semántica, ej. 'classic-cv@1.0.0'.",
+      "pattern": "^[a-z0-9][a-z0-9-]*@[0-9]+[.][0-9]+[.][0-9]+$"
+    },
+    "params": { "type": "object", "additionalProperties": true },
+    "params_hash": {
+      "type": "string",
+      "description": "SHA-256 (hex) del JSON canónico de params.",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "image": { "$ref": "image-info.schema.json" },
+    "detections": { "type": "array", "items": { "$ref": "detection.schema.json" } },
+    "total": { "type": "integer", "minimum": 0, "description": "Número de detecciones activas." },
+    "processing_ms": { "type": "integer", "minimum": 0 }
+  }
+}

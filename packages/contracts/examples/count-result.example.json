@@ -1,0 +1,30 @@
+{
+  "conteo_id": "SIRIUS-CONTEO-0001",
+  "detector_version": "classic-cv@0.1.0",
+  "params": { "min_area_px": 40 },
+  "params_hash": "0000000000000000000000000000000000000000000000000000000000000000",
+  "image": { "width": 5472, "height": 3648 },
+  "detections": [
+    {
+      "id": "d-1",
+      "x": 1203.5,
+      "y": 877,
+      "tipo": "caja",
+      "w": 18,
+      "h": 14,
+      "score": 0.91,
+      "origen": "modelo",
+      "estado": "activa"
+    },
+    {
+      "id": "d-2",
+      "x": 2400,
+      "y": 1500,
+      "tipo": "punto",
+      "origen": "modelo",
+      "estado": "descartada"
+    }
+  ],
+  "total": 1,
+  "processing_ms": 2310
+}
