@@ -1,0 +1,32 @@
+:root {
+  --bg: #fafaf7;
+  --fg: #1d2420;
+  --muted: #5b6660;
+  color-scheme: light dark;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #121614;
+    --fg: #e8ece9;
+    --muted: #9aa59f;
+  }
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: system-ui, sans-serif;
+}
+
+.home {
+  max-width: 40rem;
+  margin: 0 auto;
+  padding: 3rem 1rem;
+}
+
+.home p {
+  color: var(--muted);
+  line-height: 1.5;
+}
