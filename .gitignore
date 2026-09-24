@@ -1,0 +1,38 @@
+# Node
+node_modules/
+.next/
+out/
+*.tsbuildinfo
+next-env.d.ts
+coverage/
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Env / secrets
+.env
+.env.*
+!.env.example
+
+# Imágenes de dron: nunca en git (pesadas y sensibles)
+*.jpg
+*.jpeg
+*.JPG
+*.tif
+*.tiff
+*.dng
+!**/tests/fixtures/small/**
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/*
+!.vscode/extensions.json
+.idea/

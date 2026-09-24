@@ -1,0 +1,7 @@
+node_modules
+.next
+coverage
+services
+packages/contracts/src/generated
+package-lock.json
+CLAUDE.md
