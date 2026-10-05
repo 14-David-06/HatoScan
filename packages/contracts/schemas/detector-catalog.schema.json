@@ -1,0 +1,37 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "DetectorCatalog",
+  "description": "Métodos de detección que ofrece el servicio. La web los muestra para que la persona elija.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["default_detector", "detectors"],
+  "properties": {
+    "default_detector": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Nombre del detector que se usa si la petición no indica uno."
+    },
+    "detectors": {
+      "type": "array",
+      "items": {
+        "title": "DetectorInfo",
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name", "version", "label", "description", "available"],
+        "properties": {
+          "name": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]*$" },
+          "version": { "type": "string", "pattern": "^[0-9]+[.][0-9]+[.][0-9]+$" },
+          "label": { "type": "string", "minLength": 1, "description": "Nombre corto para la UI." },
+          "description": {
+            "type": "string",
+            "description": "Para qué sirve y cuándo elegirlo. Texto para la UI."
+          },
+          "available": {
+            "type": "boolean",
+            "description": "false si el método está declarado pero todavía no se puede ejecutar."
+          }
+        }
+      }
+    }
+  }
+}

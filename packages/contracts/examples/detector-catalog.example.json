@@ -1,0 +1,19 @@
+{
+  "default_detector": "classic-cv",
+  "detectors": [
+    {
+      "name": "classic-cv",
+      "version": "0.2.0",
+      "label": "Visión clásica · animales oscuros",
+      "description": "Búfalas y ganado oscuro sobre pasto.",
+      "available": true
+    },
+    {
+      "name": "yolo-sahi",
+      "version": "0.0.0",
+      "label": "YOLO + SAHI",
+      "description": "Modelo entrenado con el dataset propio.",
+      "available": false
+    }
+  ]
+}

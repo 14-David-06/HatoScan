@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { CountResultSchema } from '../src';
+import { CountResultSchema, DetectorCatalogSchema } from '../src';
 
 const load = (name: string): unknown =>
   JSON.parse(readFileSync(new URL(`../examples/${name}`, import.meta.url), 'utf8'));
@@ -8,6 +8,12 @@ const load = (name: string): unknown =>
 describe('contracts', () => {
   it('acepta el ejemplo de CountResult', () => {
     expect(CountResultSchema.safeParse(load('count-result.example.json')).success).toBe(true);
+  });
+
+  it('acepta el ejemplo de DetectorCatalog', () => {
+    expect(DetectorCatalogSchema.safeParse(load('detector-catalog.example.json')).success).toBe(
+      true,
+    );
   });
 
   it('rechaza coordenadas negativas', () => {
