@@ -68,6 +68,38 @@ describe('ProcessCount', () => {
     expect(count.status).toBe('error');
   });
 
+  it('detects again with another method, replacing the pending proposal', async () => {
+    const detector = detectorReturning([modelDetection('a'), modelDetection('b')]);
+    const { counts, useCase } = setup(detector);
+    await useCase.execute({ countId: COUNT_ID });
+
+    const again = await useCase.execute({ countId: COUNT_ID, detector: 'classic-cv-dark' });
+
+    expect(again.status).toBe('pendiente_revision');
+    expect(detector.calls.map((c) => c.detector)).toEqual([undefined, 'classic-cv-dark']);
+    expect(counts.saved.map((c) => c.status)).toEqual([
+      'procesando',
+      'pendiente_revision',
+      'procesando',
+      'pendiente_revision',
+    ]);
+  });
+
+  it('retries a count that ended in error', async () => {
+    let attempt = 0;
+    const detector = new FakeDetector(() =>
+      ++attempt === 1
+        ? Promise.reject(new Error('Cloud Run 503'))
+        : detectorReturning([modelDetection('a')]).detect({ countId: COUNT_ID, imageUrl: '' }),
+    );
+    const { useCase } = setup(detector);
+    expect((await useCase.execute({ countId: COUNT_ID })).status).toBe('error');
+
+    const retried = await useCase.execute({ countId: COUNT_ID });
+    expect(retried.status).toBe('pendiente_revision');
+    expect(retried.errorMessage).toBeUndefined();
+  });
+
   it('fails when the count does not exist', async () => {
     const useCase = new ProcessCount({
       counts: new InMemoryCounts(),

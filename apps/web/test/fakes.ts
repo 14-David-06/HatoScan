@@ -7,6 +7,7 @@ import {
   type CountIdGenerator,
   type CountRepository,
   type DetectInput,
+  type DetectionMethodCatalog,
   type Detection,
   type DetectionOutput,
   type DetectionResultStore,
@@ -84,6 +85,21 @@ export class FakeDetector implements Detector {
   detect(input: DetectInput): Promise<DetectionOutput> {
     this.calls.push(input);
     return this.respond(input);
+  }
+
+  methods(): Promise<DetectionMethodCatalog> {
+    return Promise.resolve({
+      defaultMethod: 'classic-cv',
+      methods: [
+        {
+          name: 'classic-cv',
+          version: '0.2.0',
+          label: 'Visión clásica',
+          description: 'Prueba',
+          available: true,
+        },
+      ],
+    });
   }
 }
 

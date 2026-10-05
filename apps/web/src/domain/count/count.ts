@@ -123,8 +123,19 @@ export class Count {
     return this.props;
   }
 
+  /**
+   * Empieza (o repite) la detección. La propuesta y el error anteriores dejan de ser los vigentes;
+   * sus JSON siguen en el almacenamiento.
+   */
   startProcessing(): Count {
-    return this.transition('procesando', {});
+    assertTransition(this.props.status, 'procesando');
+    const next: { -readonly [K in keyof CountProps]: CountProps[K] } = {
+      ...this.props,
+      status: 'procesando',
+    };
+    delete next.model;
+    delete next.errorMessage;
+    return new Count(next);
   }
 
   proposeDetections(model: ModelProposal): Count {

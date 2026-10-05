@@ -20,9 +20,26 @@ export interface DetectInput {
   readonly params?: Readonly<Record<string, unknown>>;
 }
 
+/** Un método de detección que ofrece el servicio (visión clásica, YOLO, ...). */
+export interface DetectionMethod {
+  /** Nombre estable, ej. `classic-cv`. */
+  readonly name: string;
+  readonly version: string;
+  readonly label: string;
+  readonly description: string;
+  /** `false` si está declarado pero todavía no se puede ejecutar. */
+  readonly available: boolean;
+}
+
+export interface DetectionMethodCatalog {
+  readonly defaultMethod: string;
+  readonly methods: readonly DetectionMethod[];
+}
+
 /** Puerto del detector. El dominio no sabe qué modelo hay detrás. */
 export interface Detector {
   detect(input: DetectInput): Promise<DetectionOutput>;
+  methods(): Promise<DetectionMethodCatalog>;
 }
 
 /** Puerto del almacenamiento de binarios (decisión D1 pendiente: Pinata privado o GCS). */

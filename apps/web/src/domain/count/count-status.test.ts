@@ -7,6 +7,8 @@ const ALLOWED: ReadonlyArray<[CountStatus, CountStatus]> = [
   ['procesando', 'pendiente_revision'],
   ['procesando', 'error'],
   ['pendiente_revision', 'revisado'],
+  ['pendiente_revision', 'procesando'],
+  ['error', 'procesando'],
 ];
 
 describe('count status machine', () => {
