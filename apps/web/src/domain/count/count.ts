@@ -74,6 +74,26 @@ export class Count {
     return this.props.id;
   }
 
+  get pastureId(): string {
+    return this.props.pastureId;
+  }
+
+  get species(): Species {
+    return this.props.species;
+  }
+
+  get flightDate(): Date {
+    return this.props.flightDate;
+  }
+
+  get uploadedAt(): Date {
+    return this.props.uploadedAt;
+  }
+
+  get flight(): FlightMetadata {
+    return this.props.flight;
+  }
+
   get status(): CountStatus {
     return this.props.status;
   }

@@ -1,4 +1,9 @@
-import { CountResultSchema, type CountResult, type ReviewResult } from '@hatoscan/contracts';
+import {
+  CountResultSchema,
+  ReviewResultSchema,
+  type CountResult,
+  type ReviewResult,
+} from '@hatoscan/contracts';
 import {
   countActive,
   toDetectorVersion,
@@ -7,6 +12,8 @@ import {
   type DetectionResultStore,
   type ObjectStorage,
   type ReviewRecord,
+  toCountId,
+  toPersonId,
 } from '@/domain/index';
 import { toDomainDetection } from '../contracts-mapping';
 
@@ -38,8 +45,7 @@ export class ObjectStorageResultStore implements DetectionResultStore {
   }
 
   async loadModelResult(key: string): Promise<DetectionOutput> {
-    const raw: unknown = JSON.parse(decoder.decode(await this.storage.get(key)));
-    const result = CountResultSchema.parse(raw);
+    const result = CountResultSchema.parse(await this.getJson(key));
     return {
       detector: toDetectorVersion(result.detector_version, result.params_hash),
       params: result.params,
@@ -59,8 +65,24 @@ export class ObjectStorageResultStore implements DetectionResultStore {
       detections: [...review.detections],
       total: countActive(review.detections),
     };
-    await this.putJson(key, document);
+    await this.putJson(key, ReviewResultSchema.parse(document));
     return key;
+  }
+
+  async loadReview(key: string): Promise<ReviewRecord> {
+    const review = ReviewResultSchema.parse(await this.getJson(key));
+    return {
+      countId: toCountId(review.conteo_id),
+      reviewerId: toPersonId(review.reviewer_id),
+      reviewedAt: new Date(review.reviewed_at),
+      sourceDetectorVersion: review.source_detector_version,
+      image: review.image,
+      detections: review.detections.map(toDomainDetection),
+    };
+  }
+
+  private async getJson(key: string): Promise<unknown> {
+    return JSON.parse(decoder.decode(await this.storage.get(key)));
   }
 
   private putJson(key: string, value: unknown): Promise<void> {

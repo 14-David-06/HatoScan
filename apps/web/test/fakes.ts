@@ -4,6 +4,7 @@ import {
   toDetectorVersion,
   type Clock,
   type CountId,
+  type CountIdGenerator,
   type CountRepository,
   type DetectInput,
   type Detection,
@@ -63,6 +64,11 @@ export class InMemoryCounts implements CountRepository {
     return Promise.resolve(this.byId.get(id));
   }
 
+  list(): Promise<readonly Count[]> {
+    const all = [...this.byId.values()];
+    return Promise.resolve(all.sort((a, b) => b.uploadedAt.getTime() - a.uploadedAt.getTime()));
+  }
+
   save(count: Count): Promise<void> {
     this.saved.push(count);
     this.byId.set(count.id, count);
@@ -87,7 +93,10 @@ export const detectorReturning = (detections: Detection[]): FakeDetector =>
   );
 
 export class FakeStorage implements ObjectStorage {
-  put(): Promise<void> {
+  readonly puts: { key: string; contentType: string; size: number }[] = [];
+
+  put(key: string, body: Uint8Array, contentType: string): Promise<void> {
+    this.puts.push({ key, contentType, size: body.byteLength });
     return Promise.resolve();
   }
   get(): Promise<Uint8Array> {
@@ -117,6 +126,20 @@ export class InMemoryResults implements DetectionResultStore {
     const key = `counts/${review.countId}/review.json`;
     this.reviews.set(key, review);
     return Promise.resolve(key);
+  }
+
+  loadReview(key: string): Promise<ReviewRecord> {
+    const review = this.reviews.get(key);
+    return review ? Promise.resolve(review) : Promise.reject(new Error(`missing ${key}`));
+  }
+}
+
+export class SequentialIds implements CountIdGenerator {
+  constructor(private last = 0) {}
+
+  next(): Promise<CountId> {
+    this.last += 1;
+    return Promise.resolve(toCountId(`SIRIUS-CONTEO-${String(this.last).padStart(4, '0')}`));
   }
 }
 

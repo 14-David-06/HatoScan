@@ -46,12 +46,20 @@ export interface DetectionResultStore {
   saveModelResult(countId: CountId, output: DetectionOutput): Promise<string>;
   loadModelResult(key: string): Promise<DetectionOutput>;
   saveReview(review: ReviewRecord): Promise<string>;
+  loadReview(key: string): Promise<ReviewRecord>;
 }
 
 /** Registro de conteos (Airtable, decisión D2 pendiente). */
 export interface CountRepository {
   findById(id: CountId): Promise<Count | undefined>;
+  /** Conteos más recientes primero (por fecha de carga). */
+  list(): Promise<readonly Count[]>;
   save(count: Count): Promise<void>;
+}
+
+/** Reserva el siguiente `SIRIUS-CONTEO-XXXX`. */
+export interface CountIdGenerator {
+  next(): Promise<CountId>;
 }
 
 export interface Clock {
