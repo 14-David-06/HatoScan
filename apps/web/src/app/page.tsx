@@ -1,5 +1,10 @@
-import { HomeScreen } from '@/presentation/screens/home-screen';
+import { getContainer } from '@/composition/container';
+import { CountsScreen } from '@/presentation/screens/counts-screen';
+import { toCountSummary } from '@/presentation/view-models';
 
-export default function Page() {
-  return <HomeScreen />;
+export const dynamic = 'force-dynamic';
+
+export default async function Page() {
+  const counts = await getContainer().listCounts.execute();
+  return <CountsScreen counts={counts.map(toCountSummary)} />;
 }

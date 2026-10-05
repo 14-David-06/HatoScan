@@ -12,7 +12,8 @@
       "@/domain/*": ["./src/domain/*"],
       "@/application/*": ["./src/application/*"],
       "@/infrastructure/*": ["./src/infrastructure/*"],
-      "@/presentation/*": ["./src/presentation/*"]
+      "@/presentation/*": ["./src/presentation/*"],
+      "@/composition/*": ["./src/composition/*"]
     }
   },
   "include": ["next-env.d.ts", "src", "test", "*.ts", "*.mjs", ".next/types/**/*.ts"],

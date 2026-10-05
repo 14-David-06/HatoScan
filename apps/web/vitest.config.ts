@@ -10,6 +10,7 @@ export default defineConfig({
       '@/application': src('application'),
       '@/infrastructure': src('infrastructure'),
       '@/presentation': src('presentation'),
+      '@/composition': src('composition'),
     },
   },
   test: {

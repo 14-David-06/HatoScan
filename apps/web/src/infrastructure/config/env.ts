@@ -1,12 +1,19 @@
 import 'server-only';
 import { z } from 'zod';
 
+const withoutTrailingSlash = (url: string): string => url.replace(/\/+$/, '');
+
 const EnvSchema = z.object({
-  DETECTOR_BASE_URL: z
-    .string()
-    .url()
-    .transform((url) => url.replace(/\/+$/, '')),
+  DETECTOR_BASE_URL: z.string().url().transform(withoutTrailingSlash),
   DETECTOR_TIMEOUT_MS: z.coerce.number().int().positive().default(120_000),
+  /** URL pública de la app; base de las URLs firmadas que reciben el navegador y el detector. */
+  APP_BASE_URL: z.string().url().transform(withoutTrailingSlash),
+  /** Vigencia de las URLs de lectura de imágenes, en segundos. */
+  IMAGE_URL_TTL_SECONDS: z.coerce.number().int().positive().default(900),
+  /** Carpeta de los adaptadores locales (imágenes, JSON y registro de conteos). */
+  LOCAL_DATA_DIR: z.string().min(1).default('.data'),
+  /** Secreto HMAC de las URLs firmadas del almacenamiento local. */
+  LOCAL_STORAGE_SIGNING_SECRET: z.string().min(32),
 });
 
 export type Env = z.infer<typeof EnvSchema>;

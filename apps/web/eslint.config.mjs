@@ -2,7 +2,10 @@ import nextVitals from 'eslint-config-next/core-web-vitals';
 import nextTs from 'eslint-config-next/typescript';
 import tseslint from 'typescript-eslint';
 
-/** Capas que una capa NO puede importar. Regla: presentation -> application -> domain <- infrastructure */
+/**
+ * Capas que una capa NO puede importar. Regla: presentation -> application -> domain <- infrastructure.
+ * `composition` (raíz de composición) solo la importa `src/app`.
+ */
 const layer = (files, forbidden, extra = []) => ({
   files,
   // Los tests pueden usar fakes, vitest y cualquier capa.
@@ -35,7 +38,7 @@ export default tseslint.config(
   },
   layer(
     ['src/domain/**'],
-    ['application', 'infrastructure', 'presentation', 'app'],
+    ['application', 'infrastructure', 'presentation', 'composition', 'app'],
     [
       {
         regex: '^(?!\\.|@/domain/)',
@@ -45,7 +48,7 @@ export default tseslint.config(
   ),
   layer(
     ['src/application/**'],
-    ['infrastructure', 'presentation', 'app'],
+    ['infrastructure', 'presentation', 'composition', 'app'],
     [
       {
         group: ['@hatoscan/*', 'zod', 'next', 'next/*'],
@@ -53,6 +56,7 @@ export default tseslint.config(
       },
     ],
   ),
-  layer(['src/infrastructure/**'], ['application', 'presentation', 'app']),
-  layer(['src/presentation/**'], ['infrastructure', 'app']),
+  layer(['src/infrastructure/**'], ['application', 'presentation', 'composition', 'app']),
+  layer(['src/presentation/**'], ['infrastructure', 'composition', 'app']),
+  layer(['src/composition/**'], ['presentation', 'app']),
 );
