@@ -51,6 +51,21 @@ class Detector(Protocol):
         """Versión semántica ``MAJOR.MINOR.PATCH``."""
         ...
 
+    @property
+    def label(self) -> str:
+        """Nombre corto para la UI (en español)."""
+        ...
+
+    @property
+    def description(self) -> str:
+        """Para qué sirve y cuándo elegirlo (en español)."""
+        ...
+
+    @property
+    def available(self) -> bool:
+        """``False`` si está declarado pero todavía no se puede ejecutar."""
+        ...
+
     def resolve_params(self, params: dict[str, Any] | None) -> dict[str, Any]:
         """Valida los parámetros y devuelve el conjunto completo (con valores por defecto)."""
         ...

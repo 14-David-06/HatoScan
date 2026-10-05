@@ -12,6 +12,7 @@ from app.config import Settings, get_settings
 from app.contracts.count_result_schema import CountResult
 from app.contracts.detect_request_schema import DetectRequest
 from app.contracts.detection_schema import Detection
+from app.contracts.detector_catalog_schema import DetectorCatalog, DetectorInfo
 from app.contracts.image_info_schema import ImageInfo
 from app.domain.detector import (
     Detector,
@@ -47,6 +48,26 @@ def health() -> dict[str, str]:
     return {"status": "ok"}
 
 
+@router.get("/v1/detectors")
+def list_detectors(
+    registry: Annotated[dict[str, Detector], Depends(get_registry)],
+    settings: Annotated[Settings, Depends(get_settings)],
+) -> DetectorCatalog:
+    return DetectorCatalog(
+        default_detector=settings.default_detector,
+        detectors=[
+            DetectorInfo(
+                name=d.name,
+                version=d.version,
+                label=d.label,
+                description=d.description,
+                available=d.available,
+            )
+            for d in registry.values()
+        ],
+    )
+
+
 @router.post("/v1/detect", response_model_exclude_none=True)
 async def detect(
     body: DetectRequest,
@@ -58,6 +79,10 @@ async def detect(
     detector = registry.get(name)
     if detector is None:
         raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, f"Unknown detector '{name}'")
+    if not detector.available:
+        raise HTTPException(
+            status.HTTP_422_UNPROCESSABLE_CONTENT, f"Detector '{name}' is not available yet"
+        )
 
     try:
         params = detector.resolve_params(body.params)

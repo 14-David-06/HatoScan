@@ -10,6 +10,9 @@ from app.domain.detector import DetectorError, DetectorOutput
 class YoloSahiDetector:
     name = "yolo-sahi"
     version = "0.0.0"
+    label = "YOLO + SAHI"
+    description = "Modelo entrenado con las revisiones propias. Disponible cuando haya pesos."
+    available = False
 
     def resolve_params(self, params: dict[str, Any] | None) -> dict[str, Any]:
         return dict(params or {})

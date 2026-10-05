@@ -6,14 +6,26 @@ from fastapi.testclient import TestClient
 from app.api.images import ImageDownloadError
 from app.api.routes import get_image_fetcher
 from app.contracts.count_result_schema import CountResult
+from app.contracts.detector_catalog_schema import DetectorCatalog
+from app.detectors import build_registry
 from app.detectors.classic_cv import ClassicCvDetector
-from app.domain.detector import Detector, DetectorOutput, RawDetection, params_hash
+from app.detectors.yolo_sahi import YoloSahiDetector
+from app.domain.detector import (
+    Detector,
+    DetectorError,
+    DetectorOutput,
+    RawDetection,
+    params_hash,
+)
 from app.main import create_app
 
 
 class FakeDetector:
     name = "fake"
     version = "1.2.3"
+    label = "Falso"
+    description = "Detector de prueba."
+    available = True
 
     def __init__(self) -> None:
         self.received: bytes | None = None
@@ -90,11 +102,33 @@ def test_download_failure_is_a_bad_gateway() -> None:
     assert response.status_code == 502
 
 
+class FailingDetector(FakeDetector):
+    def detect(self, image: bytes, params: dict[str, Any]) -> DetectorOutput:
+        raise DetectorError("Could not decode image")
+
+
 def test_detector_failure_is_reported_not_hidden() -> None:
-    client = make_client({"classic-cv": ClassicCvDetector()})
-    response = client.post("/v1/detect", json=REQUEST)
+    client = make_client({"fake": FailingDetector()})
+    response = client.post("/v1/detect", json={**REQUEST, "detector": "fake"})
     assert response.status_code == 500
-    assert "not implemented" in response.json()["detail"]
+    assert "Could not decode image" in response.json()["detail"]
+
+
+def test_catalog_lists_every_method_and_the_default() -> None:
+    response = make_client(build_registry()).get("/v1/detectors")
+
+    assert response.status_code == 200
+    catalog = DetectorCatalog.model_validate(response.json())
+    assert catalog.default_detector == "classic-cv"
+    assert [d.name for d in catalog.detectors] == ["classic-cv", "classic-cv-dark", "yolo-sahi"]
+    assert [d.available for d in catalog.detectors] == [True, True, False]
+
+
+def test_unavailable_detector_is_rejected_before_downloading() -> None:
+    client = make_client({"yolo-sahi": YoloSahiDetector()}, fetch_error=AssertionError("no"))
+    response = client.post("/v1/detect", json={**REQUEST, "detector": "yolo-sahi"})
+    assert response.status_code == 422
+    assert "not available" in response.json()["detail"]
 
 
 @pytest.mark.parametrize(
