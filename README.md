@@ -38,9 +38,11 @@ Copia `apps/web/.env.example` → `apps/web/.env.local` (rellena `LOCAL_STORAGE_
 ## Flujo local
 
 1. `npm run dev` y el detector en `:8000`.
-2. En http://localhost:3000 → **Nuevo conteo**: sube la foto original con potrero, especie y fecha.
+2. En http://localhost:3000 → **Nuevo conteo**: sube la foto original con potrero, especie, fecha y
+   **método de detección** (la lista la publica el servicio; ver `services/detector/README.md`).
 3. La app guarda la imagen, llama al detector y abre la **pantalla de revisión**: clic para añadir
    un animal, clic en una marca del modelo para descartarla o restaurarla, Ctrl+Z para deshacer.
+   Si la propuesta es mala, **Volver a detectar con otro método** (solo antes de confirmar).
 4. **Confirmar conteo** guarda el JSON revisado; el total revisado pasa a ser el oficial.
 
 En local, imágenes, JSON y registro de conteos viven en `apps/web/.data/` (ver
