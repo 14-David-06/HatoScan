@@ -1,6 +1,8 @@
 # Adaptador Airtable (pendiente)
 
-Aquí vivirá `AirtableCountRepository`, que implementa el puerto `CountRepository` del dominio.
+Aquí vivirá `AirtableCountRepository`, que implementa los puertos `CountRepository` y
+`CountIdGenerator` del dominio. Mientras tanto, en local se usa `JsonFileCountRepository`
+(`../counts/`), que ya tiene la forma de fila esperada.
 
 Bloqueado por:
 
