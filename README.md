@@ -32,8 +32,20 @@ uv run uvicorn app.main:app --reload --port 8000
 uv run pytest
 ```
 
-Copia `apps/web/.env.example` → `apps/web/.env.local` y `services/detector/.env.example` →
-`services/detector/.env`.
+Copia `apps/web/.env.example` → `apps/web/.env.local` (rellena `LOCAL_STORAGE_SIGNING_SECRET`) y
+`services/detector/.env.example` → `services/detector/.env`.
+
+## Flujo local
+
+1. `npm run dev` y el detector en `:8000`.
+2. En http://localhost:3000 → **Nuevo conteo**: sube la foto original con potrero, especie y fecha.
+3. La app guarda la imagen, llama al detector y abre la **pantalla de revisión**: clic para añadir
+   un animal, clic en una marca del modelo para descartarla o restaurarla, Ctrl+Z para deshacer.
+4. **Confirmar conteo** guarda el JSON revisado; el total revisado pasa a ser el oficial.
+
+En local, imágenes, JSON y registro de conteos viven en `apps/web/.data/` (ver
+[ADR 0004](docs/adr/0004-raiz-de-composicion-y-adaptadores-locales.md)); Airtable y el storage
+definitivo esperan las decisiones D1/D2.
 
 ## Contratos
 
