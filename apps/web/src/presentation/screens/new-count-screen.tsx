@@ -4,7 +4,8 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState, type FormEvent } from 'react';
 import { SPECIES, type Species } from '@/domain/index';
-import { SPECIES_LABELS } from '../view-models';
+import { MethodSelect, useMethod } from '../detection/method-select';
+import { SPECIES_LABELS, type DetectionMethodsView } from '../view-models';
 
 type Phase = 'idle' | 'uploading' | 'detecting';
 
@@ -14,8 +15,15 @@ const PHASE_LABELS: Readonly<Record<Phase, string>> = {
   detecting: 'Detectando animales…',
 };
 
-export function NewCountScreen({ today }: { today: string }) {
+export function NewCountScreen({
+  today,
+  catalog,
+}: {
+  today: string;
+  catalog: DetectionMethodsView;
+}) {
   const router = useRouter();
+  const [method, setMethod] = useMethod(catalog);
   const [phase, setPhase] = useState<Phase>('idle');
   const [error, setError] = useState<string | null>(null);
 
@@ -39,7 +47,11 @@ export function NewCountScreen({ today }: { today: string }) {
 
     // Si la detección falla, el conteo queda en `error` y la pantalla del conteo lo muestra.
     setPhase('detecting');
-    await fetch(`/api/counts/${id}/process`, { method: 'POST' }).catch(() => undefined);
+    await fetch(`/api/counts/${id}/process`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(method ? { detector: method } : {}),
+    }).catch(() => undefined);
     router.push(`/conteos/${id}`);
   };
 
@@ -89,6 +101,8 @@ export function NewCountScreen({ today }: { today: string }) {
           </label>
         </div>
 
+        <MethodSelect catalog={catalog} value={method} onChange={setMethod} disabled={busy} />
+
         <fieldset className="form__group" disabled={busy}>
           <legend>Metadatos de vuelo (opcional)</legend>
           <div className="form__row">
@@ -112,7 +126,11 @@ export function NewCountScreen({ today }: { today: string }) {
             {error}
           </p>
         )}
-        <button type="submit" className="button button--primary" disabled={busy}>
+        <button
+          type="submit"
+          className="button button--primary"
+          disabled={busy || (catalog !== null && method === '')}
+        >
           {PHASE_LABELS[phase]}
         </button>
       </form>

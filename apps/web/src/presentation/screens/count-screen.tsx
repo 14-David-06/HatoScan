@@ -1,9 +1,20 @@
 import Link from 'next/link';
+import { DetectPanel } from '../detection/detect-panel';
 import { ReviewEditor } from '../review/review-editor';
-import { SPECIES_LABELS, STATUS_LABELS, type CountDetailView } from '../view-models';
-import { ProcessButton } from './process-button';
+import {
+  SPECIES_LABELS,
+  STATUS_LABELS,
+  type CountDetailView,
+  type DetectionMethodsView,
+} from '../view-models';
 
-export function CountScreen({ count }: { count: CountDetailView }) {
+export function CountScreen({
+  count,
+  catalog,
+}: {
+  count: CountDetailView;
+  catalog: DetectionMethodsView;
+}) {
   return (
     <main className="page page--wide">
       <header className="count-header">
@@ -60,18 +71,18 @@ export function CountScreen({ count }: { count: CountDetailView }) {
         </dl>
       </header>
 
-      <CountBody count={count} />
+      <CountBody count={count} catalog={catalog} />
     </main>
   );
 }
 
-function CountBody({ count }: { count: CountDetailView }) {
+function CountBody({ count, catalog }: { count: CountDetailView; catalog: DetectionMethodsView }) {
   switch (count.status) {
     case 'subido':
       return (
         <section className="panel">
-          <p>La foto está cargada. Ejecuta el detector para obtener la propuesta de conteo.</p>
-          <ProcessButton countId={count.id} />
+          <p>La foto está cargada. Elige un método y ejecuta la detección.</p>
+          <DetectPanel countId={count.id} catalog={catalog} mode="first" />
         </section>
       );
     case 'procesando':
@@ -84,10 +95,11 @@ function CountBody({ count }: { count: CountDetailView }) {
       return (
         <section className="panel panel--error">
           <p>
-            <strong>La detección falló.</strong> El conteo no se corrigió automáticamente; revisa el
-            error y vuelve a subir la foto si hace falta.
+            <strong>La detección falló.</strong> El conteo no se corrigió automáticamente. Revisa el
+            error y reintenta, con el mismo método o con otro.
           </p>
           <pre className="error-detail">{count.errorMessage}</pre>
+          <DetectPanel countId={count.id} catalog={catalog} mode="retry" />
         </section>
       );
     case 'pendiente_revision':
@@ -109,6 +121,14 @@ function CountBody({ count }: { count: CountDetailView }) {
           image={count.image}
           detections={detections}
           readOnly={count.status === 'revisado'}
+          extraTools={
+            count.status === 'pendiente_revision' && (
+              <details key="redetect" className="redetect">
+                <summary>Volver a detectar con otro método</summary>
+                <DetectPanel countId={count.id} catalog={catalog} mode="again" />
+              </details>
+            )
+          }
         />
       );
     }

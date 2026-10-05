@@ -452,3 +452,27 @@ p.review__help {
     height: auto;
   }
 }
+
+/* Detección */
+
+.detect-panel {
+  display: grid;
+  gap: 0.6rem;
+  max-width: 32rem;
+}
+
+.detect-panel .field small,
+.field small {
+  font-size: 0.8rem;
+}
+
+.redetect {
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--border);
+  font-size: 0.9rem;
+}
+
+.redetect summary {
+  cursor: pointer;
+  margin-bottom: 0.6rem;
+}

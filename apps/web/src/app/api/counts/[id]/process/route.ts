@@ -5,9 +5,9 @@ import { processCountHandler } from '@/presentation/http/count-handlers';
 export const maxDuration = 300;
 
 export async function POST(
-  _request: Request,
+  request: Request,
   { params }: { params: Promise<{ id: string }> },
 ): Promise<Response> {
   const { id } = await params;
-  return processCountHandler(getContainer().processCount)(id);
+  return processCountHandler(getContainer().processCount)(request, id);
 }

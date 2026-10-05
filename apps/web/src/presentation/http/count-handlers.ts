@@ -18,6 +18,13 @@ const NewCountFormSchema = z.object({
   notes: z.string().trim().max(1000).optional(),
 });
 
+const ProcessBodySchema = z.object({
+  detector: z
+    .string()
+    .regex(/^[a-z0-9][a-z0-9-]*$/)
+    .optional(),
+});
+
 const ReviewBodySchema = z.object({
   reviewerId: z.string(),
   detections: z.array(DetectionSchema),
@@ -57,11 +64,19 @@ export function createCountHandler(registerCount: RegisterCount) {
     });
 }
 
-/** `POST /api/counts/{id}/process`: corre el detector. Un fallo deja el conteo en `error`. */
+/**
+ * `POST /api/counts/{id}/process` (JSON opcional `{ detector }`): corre el método elegido, o el
+ * predeterminado del servicio. Un fallo deja el conteo en `error`.
+ */
 export function processCountHandler(processCount: ProcessCount) {
-  return (id: string): Promise<Response> =>
+  return (request: Request, id: string): Promise<Response> =>
     respond(async () => {
-      const count = await processCount.execute({ countId: toCountId(id) });
+      const text = await request.text();
+      const body = ProcessBodySchema.parse(text.trim() === '' ? {} : JSON.parse(text));
+      const count = await processCount.execute({
+        countId: toCountId(id),
+        ...(body.detector !== undefined && { detector: body.detector }),
+      });
       return Response.json({
         id: count.id,
         status: count.status,

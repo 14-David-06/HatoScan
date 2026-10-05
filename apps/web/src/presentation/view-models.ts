@@ -1,6 +1,7 @@
 import type { CountDetail } from '@/application/count/get-count-detail';
 import type {
   Count,
+  DetectionMethodCatalog,
   CountStatus,
   Detection,
   FlightMetadata,
@@ -21,6 +22,9 @@ export const STATUS_LABELS: Readonly<Record<CountStatus, string>> = {
   revisado: 'Revisado',
   error: 'Error',
 };
+
+/** Métodos de detección para los selectores; `null` si el servicio no respondió. */
+export type DetectionMethodsView = DetectionMethodCatalog | null;
 
 /** Fila de la lista de conteos. Solo datos serializables. */
 export interface CountSummaryView {

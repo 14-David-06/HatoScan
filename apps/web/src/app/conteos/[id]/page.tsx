@@ -20,7 +20,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function Page({ params }: Props) {
   const { id } = await params;
   const detail = await loadDetail(id);
-  return <CountScreen count={toCountDetail(detail)} />;
+  const catalog =
+    detail.count.status === 'revisado'
+      ? null
+      : await getContainer()
+          .listDetectionMethods.execute()
+          .catch(() => null);
+  return <CountScreen count={toCountDetail(detail)} catalog={catalog} />;
 }
 
 async function loadDetail(id: string) {

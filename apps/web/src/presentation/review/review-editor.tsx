@@ -8,6 +8,7 @@ import {
   useRef,
   useState,
   type PointerEvent as ReactPointerEvent,
+  type ReactNode,
 } from 'react';
 import type { Detection, ImageSize } from '@/domain/index';
 import { hitTest, initialReviewState, reviewReducer, summarize } from './review-state';
@@ -18,6 +19,8 @@ interface ReviewEditorProps {
   readonly image: ImageSize;
   readonly detections: readonly Detection[];
   readonly readOnly: boolean;
+  /** Controles adicionales al final del panel (ej. volver a detectar). */
+  readonly extraTools?: ReactNode;
 }
 
 interface View {
@@ -41,6 +44,7 @@ export function ReviewEditor({
   image,
   detections,
   readOnly,
+  extraTools,
 }: ReviewEditorProps) {
   const router = useRouter();
   const viewportRef = useRef<HTMLDivElement>(null);
@@ -377,6 +381,7 @@ export function ReviewEditor({
             </button>
           </>
         )}
+        {extraTools}
       </aside>
     </div>
   );
