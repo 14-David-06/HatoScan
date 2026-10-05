@@ -23,13 +23,18 @@ const decoder = new TextDecoder();
 
 /**
  * Guarda los JSON de detecciones junto a la imagen, con el formato de los contratos compartidos.
- * Claves: `counts/{id}/model-result.json` y `counts/{id}/review-result.json`.
+ * Claves: `counts/{id}/model-results/{detector}-{versión}-{hash}.json`, una por método y
+ * parámetros (volver a detectar no borra las propuestas anteriores), y
+ * `counts/{id}/review-result.json`.
  */
 export class ObjectStorageResultStore implements DetectionResultStore {
   constructor(private readonly storage: ObjectStorage) {}
 
   async saveModelResult(countId: CountId, output: DetectionOutput): Promise<string> {
-    const key = `counts/${countId}/model-result.json`;
+    const { version, paramsHash } = output.detector;
+    // Sin `@`: las claves deben ser seguras en rutas y URLs firmadas de cualquier proveedor.
+    const slug = version.replace('@', '-');
+    const key = `counts/${countId}/model-results/${slug}-${paramsHash.slice(0, 12)}.json`;
     const document: CountResult = {
       conteo_id: countId,
       detector_version: output.detector.version,

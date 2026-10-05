@@ -1,5 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
+import { toDetectorVersion } from '@/domain/index';
 import { COUNT_ID, DETECTOR, IMAGE, modelDetection } from '../../test/fakes';
 import { HttpDetector } from './detector/http-detector';
 import { ObjectStorageResultStore } from './results/object-storage-result-store';
@@ -42,6 +43,28 @@ describe('HttpDetector', () => {
     );
   });
 
+  it('maps the method catalog', async () => {
+    const catalog = {
+      default_detector: 'classic-cv',
+      detectors: [
+        { name: 'classic-cv', version: '0.2.0', label: 'A', description: 'a', available: true },
+        { name: 'yolo-sahi', version: '0.0.0', label: 'B', description: 'b', available: false },
+      ],
+    };
+    const result = await detectorWith(respondWith(catalog)).methods();
+    expect(result.defaultMethod).toBe('classic-cv');
+    expect(result.methods.map((m) => [m.name, m.available])).toEqual([
+      ['classic-cv', true],
+      ['yolo-sahi', false],
+    ]);
+  });
+
+  it('rejects an invalid catalog', async () => {
+    await expect(detectorWith(respondWith({ detectors: [] })).methods()).rejects.toThrow(
+      /Invalid detector catalog/,
+    );
+  });
+
   it('surfaces HTTP errors', async () => {
     await expect(detectorWith(respondWith({ detail: 'boom' }, 503)).detect(input)).rejects.toThrow(
       /503/,
@@ -61,7 +84,21 @@ describe('ObjectStorageResultStore', () => {
 
     const key = await store.saveModelResult(COUNT_ID, output);
 
-    expect(key).toBe('counts/SIRIUS-CONTEO-0001/model-result.json');
+    expect(key).toBe(
+      `counts/SIRIUS-CONTEO-0001/model-results/classic-cv-0.1.0-${'a'.repeat(12)}.json`,
+    );
     expect(await store.loadModelResult(key)).toEqual(output);
+  });
+
+  it('keeps one model result per method, so detecting again does not overwrite', async () => {
+    const store = new ObjectStorageResultStore(new InMemoryObjectStorage());
+    const base = { params: {}, image: IMAGE, detections: [modelDetection('a')] };
+    const first = await store.saveModelResult(COUNT_ID, { ...base, detector: DETECTOR });
+    const second = await store.saveModelResult(COUNT_ID, {
+      ...base,
+      detector: toDetectorVersion('classic-cv-dark@0.1.0', 'b'.repeat(64)),
+    });
+    expect(first).not.toBe(second);
+    expect((await store.loadModelResult(first)).detector).toEqual(DETECTOR);
   });
 });

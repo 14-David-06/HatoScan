@@ -1,6 +1,7 @@
 import 'server-only';
 import { resolve } from 'node:path';
 import { GetCountDetail } from '@/application/count/get-count-detail';
+import { ListDetectionMethods } from '@/application/count/list-detection-methods';
 import { ListCounts } from '@/application/count/list-counts';
 import { ProcessCount } from '@/application/count/process-count';
 import { RegisterCount } from '@/application/count/register-count';
@@ -39,6 +40,7 @@ function createContainer() {
     localFiles: storage,
     registerCount: new RegisterCount({ counts, ids: counts, storage, clock }),
     listCounts: new ListCounts(counts),
+    listDetectionMethods: new ListDetectionMethods(detector),
     getCountDetail: new GetCountDetail({ counts, results, storage, imageUrlTtlSeconds }),
     processCount: new ProcessCount({ counts, detector, storage, results, imageUrlTtlSeconds }),
     reviewCount: new ReviewCount({ counts, results, clock }),
