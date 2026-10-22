@@ -2,18 +2,32 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useState, type FormEvent } from 'react';
+import { useEffect, useId, useRef, useState, type FormEvent } from 'react';
 import { SPECIES, type Species } from '@/domain/index';
-import { MethodSelect, useMethod } from '../detection/method-select';
+import { useElapsedSince } from '../detection/elapsed';
+import { MethodSelect, methodLabel, useMethod } from '../detection/method-select';
+import { AlertTriangleIcon, ChevronDownIcon, UploadIcon } from '../ui/icons';
+import { PhotoDropzone } from '../upload/photo-dropzone';
+import { postFormWithProgress, readReply, type TransferProgress } from '../upload/post-form';
+import { UploadSteps, type UploadStep } from '../upload/upload-steps';
 import { SPECIES_LABELS, type DetectionMethodsView } from '../view-models';
 
-type Phase = 'idle' | 'uploading' | 'detecting';
+type Phase = 'idle' | 'uploading' | 'detecting' | 'opening';
 
-const PHASE_LABELS: Readonly<Record<Phase, string>> = {
-  idle: 'Subir y detectar',
-  uploading: 'Subiendo imagen…',
-  detecting: 'Detectando animales…',
+const STEP_OF: Readonly<Record<Exclude<Phase, 'idle'>, UploadStep>> = {
+  uploading: 'upload',
+  detecting: 'detect',
+  opening: 'review',
 };
+
+const ANNOUNCEMENTS: Readonly<Record<Phase, string>> = {
+  idle: '',
+  uploading: 'Subiendo la foto.',
+  detecting: 'Foto subida. Detectando animales.',
+  opening: 'Detección terminada. Abriendo la revisión.',
+};
+
+const DEFAULT_SPECIES: Species = 'bufala';
 
 export function NewCountScreen({
   today,
@@ -24,116 +38,270 @@ export function NewCountScreen({
 }) {
   const router = useRouter();
   const [method, setMethod] = useMethod(catalog);
+  // El radio del método no es un campo del conteo: se quita del FormData antes de enviarlo.
+  const methodField = useId();
   const [phase, setPhase] = useState<Phase>('idle');
+  const [upload, setUpload] = useState<TransferProgress | null>(null);
+  const [detectStartedAt, setDetectStartedAt] = useState<number | null>(null);
+  const [detectMs, setDetectMs] = useState(0);
   const [error, setError] = useState<string | null>(null);
+  const photoRef = useRef<HTMLDivElement>(null);
+  const errorRef = useRef<HTMLDivElement>(null);
+  const mounted = useRef(false);
+  const elapsed = useElapsedSince(detectStartedAt);
+  const busy = phase !== 'idle';
+
+  useEffect(() => {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+    };
+  }, []);
+
+  // Cerrar o recargar la pestaña a mitad de la subida o de la detección deja el conteo a medias.
+  useEffect(() => {
+    if (!busy) return;
+    const warn = (event: BeforeUnloadEvent) => {
+      event.preventDefault();
+      event.returnValue = '';
+    };
+    window.addEventListener('beforeunload', warn);
+    return () => window.removeEventListener('beforeunload', warn);
+  }, [busy]);
+
+  // En móvil el error, bajo la foto, puede quedar lejos del botón: si no se ve, se trae junto al
+  // visor. Siempre se enfoca, para que el teclado siga desde ahí.
+  useEffect(() => {
+    const callout = errorRef.current;
+    if (!error || !callout) return;
+    const { top, bottom } = callout.getBoundingClientRect();
+    // `scroll-margin-top` ya descuenta la barra superior fija.
+    const covered = parseFloat(getComputedStyle(callout).scrollMarginTop) || 0;
+    if (top < covered || bottom > window.innerHeight) {
+      const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      callout.scrollIntoView({ block: 'center', behavior: reduce ? 'auto' : 'smooth' });
+    }
+    callout.focus({ preventScroll: true });
+  }, [error]);
 
   const onSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    if (busy) return;
     setError(null);
     const form = new FormData(event.currentTarget);
+    form.delete(methodField);
 
+    setUpload(null);
     setPhase('uploading');
+    revealProgress(photoRef.current);
+
     let id: string;
     try {
-      const response = await fetch('/api/counts', { method: 'POST', body: form });
-      const body = (await response.json().catch(() => ({}))) as { id?: string; error?: string };
-      if (!response.ok || !body.id) throw new Error(body.error ?? `Error ${response.status}`);
+      const reply = await postFormWithProgress('/api/counts', form, setUpload);
+      const body = readReply(reply.body);
+      if (!reply.ok || !body.id) {
+        throw new Error(body.error ?? `El servidor respondió con el error ${reply.status}.`);
+      }
       id = body.id;
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : 'No se pudo subir la imagen.');
+      setError(cause instanceof Error ? cause.message : 'No se pudo subir la foto.');
       setPhase('idle');
       return;
     }
 
     // Si la detección falla, el conteo queda en `error` y la pantalla del conteo lo muestra.
+    const startedAt = Date.now();
+    setDetectStartedAt(startedAt);
     setPhase('detecting');
     await fetch(`/api/counts/${id}/process`, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify(method ? { detector: method } : {}),
     }).catch(() => undefined);
-    router.push(`/conteos/${id}`);
+
+    setDetectMs(Date.now() - startedAt);
+    setDetectStartedAt(null);
+    setPhase('opening');
+    // Si la persona ya navegó a otra pantalla, no se la saca de ahí.
+    if (mounted.current) router.push(`/conteos/${id}`);
   };
 
-  const busy = phase !== 'idle';
-
   return (
-    <main className="page page--narrow">
-      <p>
-        <Link href="/">← Conteos</Link>
-      </p>
-      <h1>Nuevo conteo</h1>
-      <p className="muted">
-        Sube la foto original del dron, sin recortar ni reducir: los animales miden 10–20 px y el
-        detector necesita la resolución completa.
-      </p>
+    <main className="page new-count">
+      <header className="page-header new-count__header">
+        <div className="page-header__text">
+          <nav aria-label="Ruta">
+            <ol className="breadcrumb">
+              <li>
+                <Link href="/conteos">Conteos</Link>
+              </li>
+              <li aria-current="page">Nuevo conteo</li>
+            </ol>
+          </nav>
+          <h1>Nuevo conteo</h1>
+          <p>
+            Sube la foto original del dron, sin recortar ni reducir: los animales miden 10–20 px y
+            el detector necesita la resolución completa.
+          </p>
+        </div>
+      </header>
 
-      <form className="form" onSubmit={onSubmit}>
-        <label className="field">
-          <span>Foto aérea (JPG, PNG o TIFF)</span>
-          <input
+      <form className="new-count__layout" onSubmit={onSubmit}>
+        <div className="new-count__photo" ref={photoRef}>
+          <PhotoDropzone
             name="image"
-            type="file"
-            accept="image/jpeg,image/png,image/tiff"
-            required
             disabled={busy}
+            scanning={phase === 'detecting'}
+            readout={
+              phase === 'idle' ? undefined : (
+                <UploadSteps
+                  active={STEP_OF[phase]}
+                  upload={upload}
+                  method={methodLabel(catalog, method)}
+                  detectMs={phase === 'detecting' ? elapsed : detectMs}
+                />
+              )
+            }
           />
-        </label>
-
-        <div className="form__row">
-          <label className="field">
-            <span>Potrero</span>
-            <input name="pastureId" required placeholder="Ej. Potrero 12" disabled={busy} />
-          </label>
-          <label className="field">
-            <span>Especie</span>
-            <select name="species" defaultValue={'bufala' satisfies Species} disabled={busy}>
-              {SPECIES.map((s) => (
-                <option key={s} value={s}>
-                  {SPECIES_LABELS[s]}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="field">
-            <span>Fecha de vuelo</span>
-            <input name="flightDate" type="date" required max={today} disabled={busy} />
-          </label>
+          {error && (
+            <div
+              ref={errorRef}
+              tabIndex={-1}
+              className="callout callout--danger new-count__error"
+              role="alert"
+            >
+              <AlertTriangleIcon size={16} />
+              <div>
+                <p className="new-count__error-title">La foto no se subió</p>
+                <p>{error}</p>
+              </div>
+            </div>
+          )}
         </div>
 
-        <MethodSelect catalog={catalog} value={method} onChange={setMethod} disabled={busy} />
+        <div className="panel new-count__panel">
+          <fieldset className="new-count__fields" disabled={busy}>
+            <legend className="visually-hidden">Datos del conteo</legend>
 
-        <fieldset className="form__group" disabled={busy}>
-          <legend>Metadatos de vuelo (opcional)</legend>
-          <div className="form__row">
-            <label className="field">
-              <span>Altura (m)</span>
-              <input name="altitudeM" type="number" min="1" step="any" inputMode="decimal" />
-            </label>
-            <label className="field">
-              <span>Ángulo de cámara (°, 90 = cenital)</span>
-              <input name="cameraAngleDeg" type="number" min="0" max="90" step="any" />
-            </label>
+            <div className="new-count__row">
+              <label className="field">
+                <span className="field__label">Potrero</span>
+                <input name="pastureId" required placeholder="Ej. Potrero 12" autoComplete="off" />
+              </label>
+              <label className="field">
+                <span className="field__label">Fecha de vuelo</span>
+                <input name="flightDate" type="date" required max={today} />
+              </label>
+            </div>
+
+            <fieldset className="field new-count__species">
+              <legend className="field__label">Especie</legend>
+              <div className="segmented">
+                {SPECIES.map((s) => (
+                  <label key={s}>
+                    <input
+                      type="radio"
+                      name="species"
+                      value={s}
+                      defaultChecked={s === DEFAULT_SPECIES}
+                    />
+                    {SPECIES_LABELS[s]}
+                  </label>
+                ))}
+              </div>
+            </fieldset>
+
+            <div className="new-count__section">
+              <MethodSelect
+                name={methodField}
+                catalog={catalog}
+                value={method}
+                onChange={setMethod}
+              />
+            </div>
+
+            <details className="new-count__more">
+              <summary>
+                <ChevronDownIcon size={16} className="new-count__chevron" />
+                Metadatos de vuelo
+                <span className="new-count__optional">opcional</span>
+              </summary>
+              <div className="new-count__more-body">
+                <div className="new-count__row">
+                  <label className="field">
+                    <span className="field__label">Altura</span>
+                    <span className="new-count__unit" data-unit="m">
+                      <input
+                        name="altitudeM"
+                        type="number"
+                        min="1"
+                        step="any"
+                        inputMode="decimal"
+                        placeholder="Ej. 80"
+                      />
+                    </span>
+                  </label>
+                  <label className="field">
+                    <span className="field__label">Ángulo de cámara</span>
+                    <span className="new-count__unit" data-unit="°">
+                      <input
+                        name="cameraAngleDeg"
+                        type="number"
+                        min="0"
+                        max="90"
+                        step="any"
+                        inputMode="decimal"
+                        placeholder="Ej. 90"
+                        aria-describedby="new-count-angle-hint"
+                      />
+                    </span>
+                    <span className="field__hint" id="new-count-angle-hint">
+                      90° = cenital, mirando hacia abajo
+                    </span>
+                  </label>
+                </div>
+                <label className="field">
+                  <span className="field__label">Observaciones</span>
+                  <textarea
+                    name="notes"
+                    rows={3}
+                    maxLength={1000}
+                    placeholder="Ej. viento fuerte, nubes sobre el lote norte"
+                  />
+                </label>
+              </div>
+            </details>
+          </fieldset>
+
+          <div className="new-count__submit">
+            <button
+              type="submit"
+              className="button button--primary button--lg button--block"
+              aria-busy={busy}
+              disabled={!busy && catalog !== null && method === ''}
+            >
+              {busy ? <span className="spinner" aria-hidden="true" /> : <UploadIcon size={18} />}
+              Subir y detectar
+            </button>
           </div>
-          <label className="field">
-            <span>Observaciones</span>
-            <textarea name="notes" rows={3} maxLength={1000} />
-          </label>
-        </fieldset>
+        </div>
 
-        {error && (
-          <p className="form-error" role="alert">
-            {error}
-          </p>
-        )}
-        <button
-          type="submit"
-          className="button button--primary"
-          disabled={busy || (catalog !== null && method === '')}
-        >
-          {PHASE_LABELS[phase]}
-        </button>
+        <p className="visually-hidden" aria-live="polite">
+          {ANNOUNCEMENTS[phase]}
+        </p>
       </form>
     </main>
   );
+}
+
+/**
+ * En una columna (móvil) la foto queda arriba, fuera de vista: se trae para ver el progreso, que
+ * aparece al pie del visor. En escritorio la columna de la foto es fija y ya está a la vista.
+ */
+function revealProgress(element: HTMLElement | null) {
+  if (!element) return;
+  const { bottom } = element.getBoundingClientRect();
+  if (bottom > 96 && bottom <= window.innerHeight) return;
+  const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  element.scrollIntoView({ block: 'start', behavior: reduce ? 'auto' : 'smooth' });
 }

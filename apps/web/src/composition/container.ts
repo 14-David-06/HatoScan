@@ -1,13 +1,17 @@
 import 'server-only';
 import { resolve } from 'node:path';
+import { AuthenticateUser } from '@/application/auth/authenticate-user';
 import { GetCountDetail } from '@/application/count/get-count-detail';
 import { ListDetectionMethods } from '@/application/count/list-detection-methods';
 import { ListCounts } from '@/application/count/list-counts';
 import { ProcessCount } from '@/application/count/process-count';
 import { RegisterCount } from '@/application/count/register-count';
 import { ReviewCount } from '@/application/count/review-count';
-import type { Clock } from '@/domain/index';
+import type { Clock, User } from '@/domain/index';
+import { AirtableUserDirectory } from '@/infrastructure/airtable/airtable-user-directory';
 import { LoginRateLimiter } from '@/infrastructure/auth/login-rate-limiter';
+import { ScryptPasswordHasher } from '@/infrastructure/auth/scrypt-password-hasher';
+import { signSession, verifySession } from '@/infrastructure/auth/session-token';
 import { getEnv } from '@/infrastructure/config/env';
 import { JsonFileCountRepository } from '@/infrastructure/counts/json-file-count-repository';
 import { HttpDetector } from '@/infrastructure/detector/http-detector';
@@ -37,6 +41,11 @@ function createContainer() {
     getAuthToken: () => Promise.resolve(env.DETECTOR_API_TOKEN),
   });
   const imageUrlTtlSeconds = env.IMAGE_URL_TTL_SECONDS;
+  const users = new AirtableUserDirectory({
+    apiToken: env.AIRTABLE_API_TOKEN,
+    baseId: env.AIRTABLE_BASE_ID,
+    tableId: env.AIRTABLE_USUARIOS_TABLE_ID,
+  });
 
   return {
     localFiles: storage,
@@ -46,7 +55,12 @@ function createContainer() {
     getCountDetail: new GetCountDetail({ counts, results, storage, imageUrlTtlSeconds }),
     processCount: new ProcessCount({ counts, detector, storage, results, imageUrlTtlSeconds }),
     reviewCount: new ReviewCount({ counts, results, clock }),
+    authenticateUser: new AuthenticateUser({ users, passwords: new ScryptPasswordHasher() }),
     loginAttempts: new LoginRateLimiter(),
+    sessions: {
+      sign: (user: User) => signSession(user, env.AUTH_SESSION_SECRET),
+      verify: (token: string | undefined) => verifySession(token, env.AUTH_SESSION_SECRET),
+    },
   };
 }
 

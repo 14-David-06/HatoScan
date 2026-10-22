@@ -1,0 +1,202 @@
+/* Selector del método de detección (tarjetas de radio) y panel para ejecutar la detección. */
+
+.method-select {
+  display: grid;
+  gap: var(--space-2);
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.method-select__legend {
+  margin: 0 0 var(--space-2);
+  padding: 0;
+  color: var(--ink);
+  font-size: var(--text-sm);
+  font-weight: 600;
+}
+
+.method-select__options {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.method-option {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1rem minmax(0, 1fr);
+  align-content: center;
+  gap: var(--space-3);
+  min-height: 2.75rem;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  cursor: pointer;
+  transition:
+    border-color var(--dur-2) var(--ease-out),
+    background-color var(--dur-2) var(--ease-out),
+    box-shadow var(--dur-2) var(--ease-out);
+}
+
+.method-option:hover {
+  border-color: var(--ink-faint);
+}
+
+.method-option:has(.method-option__input:checked) {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent-soft) 45%, var(--surface));
+  box-shadow: inset 0 0 0 1px var(--accent);
+}
+
+.method-option:has(.method-option__input:focus-visible) {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.method-option[data-unavailable] {
+  border-style: dashed;
+  background: var(--surface-sunken);
+  cursor: not-allowed;
+}
+
+.method-option[data-unavailable] .method-option__main,
+.method-option[data-unavailable] .method-option__radio {
+  opacity: 0.6;
+}
+
+.method-select:disabled .method-option {
+  cursor: not-allowed;
+}
+
+.method-select:disabled .method-option:not(:has(:checked)) {
+  opacity: 0.55;
+}
+
+.method-option__input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.method-option__radio {
+  display: grid;
+  place-items: center;
+  width: 1rem;
+  height: 1rem;
+  margin-top: 0.1875rem;
+  border: 1.5px solid var(--line-strong);
+  border-radius: 50%;
+  background: var(--surface);
+  transition: border-color var(--dur-2) var(--ease-out);
+}
+
+.method-option__radio::after {
+  content: '';
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background: var(--accent);
+  transform: scale(0);
+  transition: transform var(--dur-2) var(--ease-emphasized);
+}
+
+.method-option:has(.method-option__input:checked) .method-option__radio {
+  border-color: var(--accent);
+}
+
+.method-option:has(.method-option__input:checked) .method-option__radio::after {
+  transform: scale(1);
+}
+
+.method-option__main {
+  display: grid;
+  gap: 0.2rem;
+  min-width: 0;
+}
+
+.method-option__label {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.25rem var(--space-2);
+  color: var(--ink);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.method-option__badge {
+  display: inline-flex;
+  align-items: center;
+  height: 1.25rem;
+  padding: 0 0.45rem;
+  border-radius: var(--radius-full);
+  background: color-mix(in srgb, var(--ink) 8%, transparent);
+  color: var(--ink-muted);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.method-option__desc {
+  color: var(--ink-muted);
+  font-size: var(--text-xs);
+  line-height: 1.5;
+}
+
+/* Descripción del método elegido, debajo de la lista. */
+.method-select__note {
+  color: var(--ink-muted);
+  font-size: var(--text-xs);
+  line-height: 1.5;
+}
+
+.method-select__note .tag {
+  margin-left: var(--space-1);
+  color: var(--ink-muted);
+}
+
+/* ---------- Panel de detección ---------- */
+
+.detect-panel {
+  display: grid;
+  gap: var(--space-4);
+  max-width: 40rem;
+}
+
+.detect-panel--again {
+  gap: var(--space-3);
+  max-width: none;
+}
+
+.detect-panel__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-4);
+}
+
+.detect-panel--again .detect-panel__actions > .button {
+  flex: 1 1 100%;
+}
+
+.detect-panel__status {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  color: var(--ink-muted);
+  font-size: var(--text-sm);
+}
+
+.detect-panel__elapsed {
+  color: var(--ink);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.detect-panel__note {
+  color: var(--ink-muted);
+  font-size: var(--text-xs);
+}

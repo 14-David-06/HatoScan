@@ -1,0 +1,860 @@
+/* Lista de conteos (counts-screen): resumen del inventario, filtros y tabla. */
+
+/* Color de cada grupo de estado: el mismo en la barra y en la leyenda (ver tokens.css). */
+.counts-tone--pendientes {
+  --counts-tone: var(--signal-strong);
+}
+
+.counts-tone--revisados {
+  --counts-tone: var(--accent);
+}
+
+.counts-tone--en-proceso {
+  --counts-tone: var(--ink-faint);
+}
+
+.counts-tone--error {
+  --counts-tone: var(--danger);
+}
+
+/* ---------- Resumen del inventario ---------- */
+
+.counts-summary {
+  display: grid;
+  gap: var(--space-4);
+  margin-bottom: var(--space-4);
+}
+
+.counts-summary__top {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4) var(--space-10);
+  align-items: flex-end;
+  justify-content: space-between;
+}
+
+.counts-summary__headline {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 var(--space-3);
+  align-items: baseline;
+  color: var(--ink);
+}
+
+.counts-summary__figure {
+  font-size: var(--text-4xl);
+  font-stretch: var(--stretch-expanded);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1;
+}
+
+.counts-summary__phrase {
+  font-size: var(--text-lg);
+  font-weight: 550;
+}
+
+/* Un título con su regla agrupa los tres hechos: son de un vuelo, no del hato. */
+.counts-latest {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.counts-latest__title {
+  padding-bottom: var(--space-2);
+  border-bottom: 1px solid var(--line);
+  color: var(--ink);
+  font-size: var(--text-sm);
+  font-weight: 600;
+}
+
+.counts-latest__link {
+  color: var(--ink);
+  text-decoration-color: var(--line-strong);
+}
+
+.counts-latest__link:hover {
+  color: var(--accent);
+  text-decoration-color: currentColor;
+}
+
+/* Barra apilada: segmentos separados por 2 px de fondo, extremos redondeados. */
+.counts-bar {
+  display: flex;
+  gap: 2px;
+  height: 0.625rem;
+}
+
+.counts-bar__segment {
+  flex: 1 1 0;
+  min-width: 0.25rem;
+  border-radius: 1px;
+  background: var(--counts-tone);
+  /* Solo se mueve al filtrar: los segmentos que no entran en el filtro se atenúan. */
+  transition: opacity var(--dur-2) var(--ease-out);
+}
+
+.counts-bar__segment:first-child {
+  border-top-left-radius: 4px;
+  border-bottom-left-radius: 4px;
+}
+
+.counts-bar__segment:last-child {
+  border-top-right-radius: 4px;
+  border-bottom-right-radius: 4px;
+}
+
+.counts-bar__segment[data-dimmed] {
+  opacity: 0.22;
+}
+
+/* ---------- Leyenda que filtra + búsqueda ---------- */
+
+.counts-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  align-items: center;
+  justify-content: space-between;
+}
+
+.counts-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px;
+  min-width: 0;
+  margin: 0;
+  padding: 3px;
+  border: 1px solid var(--line-strong);
+  border-radius: calc(var(--radius-md) + 3px);
+  background: var(--surface-sunken);
+}
+
+.counts-legend__option {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  min-height: 2.125rem;
+  padding: 0 0.8rem;
+  border-radius: var(--radius-md);
+  color: var(--ink-muted);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    background-color var(--dur-2) var(--ease-out),
+    color var(--dur-2) var(--ease-out),
+    box-shadow var(--dur-2) var(--ease-out);
+}
+
+.counts-legend__option input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.counts-legend__option:hover {
+  color: var(--ink);
+}
+
+.counts-legend__option:has(input:checked) {
+  background: var(--surface-raised);
+  color: var(--ink);
+  box-shadow:
+    0 1px 2px rgb(10 24 16 / 0.12),
+    0 0 0 1px var(--line);
+}
+
+.counts-legend__option:has(input:focus-visible) {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.counts-legend__option:has(input:disabled) {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.counts-legend__option:has(input:disabled):hover {
+  color: var(--ink-muted);
+}
+
+.counts-legend__swatch {
+  width: 0.625rem;
+  height: 0.625rem;
+  flex-shrink: 0;
+  border-radius: 2px;
+  background: var(--counts-tone);
+}
+
+/* La barra es decorativa: estos números son su única forma en texto, así que contrastan como texto. */
+.counts-legend__count {
+  min-width: 1ch;
+  color: var(--ink-muted);
+  font-stretch: var(--stretch-condensed);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+
+.counts-legend__option:has(input:checked) .counts-legend__count {
+  color: var(--ink);
+}
+
+.counts-search {
+  position: relative;
+  flex: 0 1 17rem;
+  min-width: 12rem;
+}
+
+.counts-search__icon {
+  position: absolute;
+  top: 50%;
+  left: 0.75rem;
+  color: var(--ink-faint);
+  pointer-events: none;
+  transform: translateY(-50%);
+}
+
+.counts-search .counts-search__input {
+  min-height: 2.625rem;
+  padding-right: 2.75rem;
+  padding-left: 2.25rem;
+}
+
+/* El botón propio sustituye al nativo: igual en todos los navegadores y con 40 px de objetivo. */
+.counts-search__input::-webkit-search-cancel-button {
+  display: none;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.counts-search__clear {
+  --button-h: 2.5rem;
+  position: absolute;
+  top: calc(50% - 1.25rem);
+  right: 1px;
+  color: var(--ink-muted);
+}
+
+/* ---------- Tabla ---------- */
+
+.counts-table-panel {
+  overflow-x: auto;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+}
+
+/*
+ * Anchos de columna por tramo de pantalla (ver media queries al final). El potrero no tiene ancho:
+ * se queda con lo que sobra y, si no cabe, termina en puntos suspensivos.
+ */
+.counts-table {
+  --col-id: 11rem;
+  --col-species: 6.5rem;
+  --col-date: 8.5rem;
+  --col-status: 12rem;
+  --col-model: 6.5rem;
+  --col-reviewed: 6.5rem;
+  --col-diff: 7rem;
+  /* Sitio a la derecha de la última columna visible para el chevron de la fila. */
+  --col-end: 2.5rem;
+
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--text-sm);
+}
+
+.counts-table th,
+.counts-table td {
+  padding: 0 var(--space-3);
+  text-align: left;
+  white-space: nowrap;
+}
+
+.counts-table th {
+  height: 2.5rem;
+  border-bottom: 1px solid var(--line);
+  background: var(--surface-sunken);
+  color: var(--ink-muted);
+  font-size: var(--text-xs);
+  font-stretch: var(--stretch-condensed);
+  font-weight: 500;
+}
+
+.counts-table td {
+  height: 3.25rem;
+  border-bottom: 1px solid var(--line);
+}
+
+.counts-table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.counts-table :is(th, td):first-child {
+  padding-left: var(--space-5);
+}
+
+.counts-table .counts-cell--diff {
+  padding-right: var(--col-end);
+}
+
+.counts-table :is(.counts-cell--model, .counts-cell--reviewed, .counts-cell--diff) {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Toda la fila es clicable; el fondo cambia apenas, sin elevarse. */
+.counts-row {
+  position: relative;
+  transition: background-color var(--dur-2) var(--ease-out);
+}
+
+.counts-row:has(.counts-row__link):hover {
+  background: color-mix(in srgb, var(--ink) 3.5%, transparent);
+}
+
+.counts-row--pending > td:first-child {
+  box-shadow: inset 3px 0 0 var(--signal-strong);
+}
+
+.counts-row__link {
+  color: var(--ink);
+  font-stretch: var(--stretch-condensed);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  text-decoration: none;
+}
+
+.counts-row__link:hover {
+  color: var(--ink);
+}
+
+.counts-row__link::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+}
+
+/* El foco de teclado cae en el enlace del ID, pero el anillo rodea la fila entera. */
+.counts-row__link:focus-visible {
+  outline: none;
+}
+
+.counts-row__link:focus-visible::after {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+  border-radius: 2px;
+}
+
+/* El chevron va dentro del enlace pero se dibuja contra el borde derecho de la fila. */
+.counts-row__chevron {
+  position: absolute;
+  top: 50%;
+  right: var(--space-3);
+  color: var(--ink-faint);
+  transform: translateY(-50%);
+  transition: color var(--dur-2) var(--ease-out);
+}
+
+.counts-row:hover .counts-row__chevron {
+  color: var(--ink);
+}
+
+.counts-id__prefix {
+  color: var(--ink-muted);
+}
+
+.counts-id__number {
+  color: var(--ink);
+  font-weight: 650;
+}
+
+.counts-row .counts-cell--pasture {
+  overflow: hidden;
+  color: var(--ink);
+  font-weight: 550;
+  text-overflow: ellipsis;
+}
+
+.counts-row :is(.counts-cell--species, .counts-cell--date, .counts-cell--model) {
+  color: var(--ink-muted);
+}
+
+.counts-row .counts-cell--reviewed {
+  color: var(--ink);
+  font-size: var(--text-md);
+  font-weight: 700;
+}
+
+/* Una diferencia distinta de cero es una corrección del revisor: se lee primero. */
+.counts-diff {
+  color: var(--ink);
+  font-weight: 550;
+}
+
+.counts-diff--zero {
+  color: var(--ink-muted);
+  font-weight: 400;
+}
+
+/* La raya es decorativa (el texto «sin dato» va oculto para lectores de pantalla). */
+.counts-none {
+  color: var(--ink-faint);
+  font-weight: 400;
+}
+
+/* Sin resultados por filtro o búsqueda: ocupa el sitio de la tabla. */
+.counts-no-results {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-2);
+  padding: var(--space-12) var(--space-6);
+  text-align: center;
+}
+
+.counts-no-results__icon {
+  margin-bottom: var(--space-1);
+  color: var(--ink-faint);
+}
+
+.counts-no-results__title {
+  color: var(--ink);
+  font-weight: 650;
+}
+
+.counts-no-results__text {
+  max-width: 30rem;
+  margin-bottom: var(--space-2);
+  color: var(--ink-muted);
+  font-size: var(--text-sm);
+}
+
+/* ---------- Estado vacío ---------- */
+
+.counts-empty {
+  gap: var(--space-4);
+}
+
+.counts-empty__art {
+  max-width: 100%;
+  height: auto;
+  margin-bottom: var(--space-2);
+}
+
+.counts-empty__contours {
+  stroke: var(--ink-faint);
+}
+
+.counts-empty__reticle {
+  stroke: var(--ink);
+}
+
+/* El marco del visor tapa las curvas que pasan por debajo, como una lente. */
+.counts-empty__frame {
+  fill: color-mix(in srgb, var(--surface) 82%, transparent);
+  stroke-opacity: 0.45;
+}
+
+.counts-empty__target {
+  fill: var(--mark-model);
+}
+
+.counts-empty .button {
+  margin-top: var(--space-2);
+}
+
+/* ---------- Esqueleto de carga ---------- */
+
+/* Barras en línea dentro de los mismos elementos de la página: el alto de línea lo pone el texto. */
+.counts-skeleton__text {
+  display: inline-block;
+  max-width: 100%;
+  height: 0.75em;
+  vertical-align: middle;
+}
+
+.counts-skeleton__text--figure {
+  width: 0.7em;
+}
+
+.counts-skeleton__text--phrase {
+  width: 16rem;
+}
+
+.counts-skeleton__text--title {
+  width: 11.5rem;
+}
+
+.counts-skeleton__text--label {
+  width: 4.5rem;
+}
+
+.counts-skeleton__text--value {
+  width: 4rem;
+}
+
+.counts-skeleton__text--id {
+  width: 8.25rem;
+}
+
+.counts-skeleton__text--pasture-sm {
+  width: 4.5rem;
+}
+
+.counts-skeleton__text--pasture-md {
+  width: 6.5rem;
+}
+
+.counts-skeleton__text--pasture-lg {
+  width: 8.5rem;
+}
+
+.counts-skeleton__text--species {
+  width: 2.75rem;
+}
+
+.counts-skeleton__text--date {
+  width: 4.75rem;
+}
+
+.counts-skeleton__text--status {
+  width: 9.5rem;
+  height: 1.5rem;
+  border-radius: var(--radius-full);
+}
+
+.counts-skeleton__text--num {
+  width: 1.75rem;
+}
+
+.counts-skeleton__bar {
+  height: 0.625rem;
+  border-radius: 4px;
+}
+
+.counts-skeleton__legend {
+  width: 38rem;
+  max-width: 100%;
+  height: 2.625rem;
+  border-radius: calc(var(--radius-md) + 3px);
+}
+
+.counts-skeleton__search {
+  width: 100%;
+  height: 2.625rem;
+  border-radius: var(--radius-md);
+}
+
+/* ---------- Anchos de columna ---------- */
+
+/*
+ * Columnas fijas desde 48rem: filtrar o escribir en la búsqueda no hace saltar la tabla, y un
+ * potrero largo se recorta en su celda en vez de empujar la tabla fuera del panel.
+ */
+@media (min-width: 48rem) {
+  .counts-table {
+    table-layout: fixed;
+  }
+
+  .counts-table th.counts-cell--id {
+    width: var(--col-id);
+  }
+
+  .counts-table th.counts-cell--species {
+    width: var(--col-species);
+  }
+
+  .counts-table th.counts-cell--date {
+    width: var(--col-date);
+  }
+
+  .counts-table th.counts-cell--status {
+    width: var(--col-status);
+  }
+
+  .counts-table th.counts-cell--model {
+    width: var(--col-model);
+  }
+
+  .counts-table th.counts-cell--reviewed {
+    width: var(--col-reviewed);
+  }
+
+  .counts-table th.counts-cell--diff {
+    width: var(--col-diff);
+  }
+}
+
+@media (max-width: 79.99rem) {
+  .counts-table {
+    --col-id: 10.75rem;
+    --col-species: 4.75rem;
+    --col-date: 6.75rem;
+    --col-status: 11.25rem;
+    --col-model: 4.5rem;
+    --col-reviewed: 4.75rem;
+    --col-diff: 6.75rem;
+  }
+}
+
+/* Tableta: sin Diferencia (se deduce de Modelo y Revisado) y con menos aire entre columnas. */
+@media (max-width: 63.99rem) {
+  .counts-table {
+    --col-id: 10.25rem;
+    --col-species: 4rem;
+    --col-date: 6.25rem;
+    --col-status: 10.75rem;
+    --col-model: 4rem;
+    --col-reviewed: 6rem;
+  }
+
+  .counts-table .counts-cell--diff {
+    display: none;
+  }
+
+  .counts-table th,
+  .counts-table td {
+    padding: 0 var(--space-2);
+  }
+
+  .counts-table :is(th, td):first-child {
+    padding-left: var(--space-4);
+  }
+
+  .counts-table .counts-cell--reviewed {
+    padding-right: var(--col-end);
+  }
+
+  /* La leyenda ya ocupa casi toda la fila: la búsqueda pasa debajo, a todo el ancho. */
+  .counts-search {
+    flex: 1 1 100%;
+  }
+}
+
+/*
+ * Pantallas estrechas: todos los IDs empiezan por «SIRIUS-CONTEO-», así que a la vista queda solo
+ * el número. El prefijo sigue en el DOM (como .visually-hidden) para copiar y para lectores de
+ * pantalla, y el enlace de la fila conserva el ID completo como nombre.
+ */
+@media (max-width: 55.99rem) {
+  .counts-table {
+    --col-id: 4.5rem;
+  }
+
+  .counts-id__prefix {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+
+  .counts-skeleton__text--id {
+    width: 2.25rem;
+  }
+}
+
+/* ---------- Móvil: la tabla pasa a filas apiladas ---------- */
+
+@media (max-width: 47.99rem) {
+  /* 16 px evita el zoom automático de iOS al enfocar. */
+  .counts-search .counts-search__input {
+    min-height: 2.75rem;
+    font-size: var(--text-md);
+  }
+
+  .counts-skeleton__search {
+    height: 2.75rem;
+  }
+
+  /* Bajo la cifra, el grupo del último vuelo ocupa todo el ancho y su regla llega al borde. */
+  .counts-latest {
+    flex: 1 1 100%;
+  }
+
+  /* Leyenda en dos columnas, con «Todos» a todo el ancho: se lee como una tabla de leyenda. */
+  .counts-legend {
+    display: grid;
+    flex: 1 1 100%;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .counts-legend__option {
+    justify-content: flex-start;
+    min-height: 2.5rem;
+    padding: 0 0.75rem;
+  }
+
+  .counts-legend__option:first-of-type {
+    grid-column: 1 / -1;
+  }
+
+  .counts-legend__count {
+    margin-left: auto;
+  }
+
+  /* Tres filas de 40 px, sus separaciones, el relleno y el borde de la leyenda. */
+  .counts-skeleton__legend {
+    width: 100%;
+    height: calc(3 * 2.5rem + 2 * 2px + 2 * 3px + 2px);
+  }
+
+  .counts-table,
+  .counts-table tbody {
+    display: block;
+  }
+
+  .counts-table thead {
+    display: none;
+  }
+
+  /*
+   * Tres líneas: ID y estado; potrero y total revisado; especie, fecha y total del modelo.
+   * Los pseudoelementos de 100 % de ancho fuerzan los saltos de línea.
+   */
+  .counts-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    column-gap: var(--space-3);
+    padding: var(--space-3) 2.25rem var(--space-3) var(--space-4);
+    border-bottom: 1px solid var(--line);
+  }
+
+  .counts-table tbody .counts-row:last-child {
+    border-bottom: 0;
+  }
+
+  .counts-row::before,
+  .counts-row::after {
+    content: '';
+    flex-basis: 100%;
+    height: var(--space-1);
+  }
+
+  .counts-row::before {
+    order: 3;
+  }
+
+  .counts-row::after {
+    order: 6;
+  }
+
+  .counts-table .counts-row > td {
+    display: block;
+    height: auto;
+    padding: 0;
+    border: 0;
+  }
+
+  .counts-table .counts-row > .counts-cell--diff {
+    display: none;
+  }
+
+  .counts-row--pending {
+    box-shadow: inset 3px 0 0 var(--signal-strong);
+  }
+
+  .counts-row--pending > td:first-child {
+    box-shadow: none;
+  }
+
+  .counts-row > .counts-cell--id {
+    order: 1;
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  .counts-row > .counts-cell--status {
+    order: 2;
+    align-self: center;
+    margin-left: auto;
+  }
+
+  .counts-row > .counts-cell--pasture {
+    order: 4;
+    flex: 1 1 0;
+    min-width: 0;
+  }
+
+  .counts-row > .counts-cell--reviewed {
+    order: 5;
+  }
+
+  .counts-row > .counts-cell--species {
+    order: 7;
+  }
+
+  .counts-row > .counts-cell--date {
+    order: 8;
+    flex: 1 1 auto;
+  }
+
+  .counts-row > .counts-cell--model {
+    order: 9;
+  }
+
+  .counts-row :is(.counts-cell--model, .counts-cell--reviewed)::before {
+    content: attr(data-label);
+    margin-right: 0.35rem;
+    color: var(--ink-muted);
+    font-size: var(--text-xs);
+    font-stretch: var(--stretch-condensed);
+    font-weight: 500;
+  }
+
+  .counts-row .counts-cell--reviewed {
+    font-size: var(--text-sm);
+  }
+
+  .counts-row :is(.counts-cell--species, .counts-cell--date, .counts-cell--model) {
+    font-size: var(--text-xs);
+  }
+
+  .counts-row__chevron {
+    right: 0.625rem;
+  }
+}
+
+/* ---------- Pantallas táctiles: objetivos de 40 px ---------- */
+
+@media (pointer: coarse) {
+  .counts-legend__option {
+    min-height: 2.5rem;
+  }
+
+  .counts-search .counts-search__input {
+    min-height: 2.75rem;
+  }
+
+  /* El enlace crece hacia arriba y abajo sin mover el texto que lo rodea. */
+  .counts-latest__link {
+    display: inline-block;
+    margin-block: -0.625rem;
+    padding-block: 0.625rem;
+  }
+
+  .counts-no-results .button {
+    --button-h: 2.5rem;
+  }
+
+  .counts-skeleton__legend {
+    height: calc(2.5rem + 2 * 3px + 2px);
+  }
+
+  .counts-skeleton__search {
+    height: 2.75rem;
+  }
+}
+
+@media (pointer: coarse) and (max-width: 47.99rem) {
+  .counts-skeleton__legend {
+    height: calc(3 * 2.5rem + 2 * 2px + 2 * 3px + 2px);
+  }
+}

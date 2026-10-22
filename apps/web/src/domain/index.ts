@@ -6,3 +6,4 @@ export * from './count/count-status';
 export * from './count/detection';
 export * from './count/detector-version';
 export * from './count/review';
+export * from './auth/user';

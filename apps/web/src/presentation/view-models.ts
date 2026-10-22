@@ -7,7 +7,9 @@ import type {
   FlightMetadata,
   ImageSize,
   Species,
+  User,
 } from '@/domain/index';
+import { canReview } from '@/domain/index';
 
 export const SPECIES_LABELS: Readonly<Record<Species, string>> = {
   bufala: 'Búfala',
@@ -82,4 +84,27 @@ export function toCountDetail(detail: CountDetail): CountDetailView {
       reviewedAt: review.reviewedAt.toISOString(),
     }),
   };
+}
+
+/** Usuario de la sesión, tal como lo ven las pantallas. Solo datos serializables. */
+export interface SessionUserView {
+  readonly id: string;
+  readonly name: string;
+  readonly canReview: boolean;
+}
+
+/** Quien confirmaría una revisión. */
+export interface ReviewerView {
+  readonly id: string;
+  readonly name: string;
+}
+
+/** Estado del formulario de ingreso entre envíos (server action). */
+export interface LoginState {
+  readonly error?: string;
+  readonly nationalId?: string;
+}
+
+export function toSessionUser(user: User): SessionUserView {
+  return { id: user.id, name: user.name, canReview: canReview(user) };
 }

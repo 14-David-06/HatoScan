@@ -4,7 +4,7 @@ import { ApplicationError, CountNotFoundError } from '@/application/errors';
 import type { ProcessCount } from '@/application/count/process-count';
 import type { RegisterCount } from '@/application/count/register-count';
 import type { ReviewCount } from '@/application/count/review-count';
-import { DomainError, SPECIES, toCountId, toPersonId, type Detection } from '@/domain/index';
+import { DomainError, SPECIES, toCountId, type Detection, type PersonId } from '@/domain/index';
 
 const optionalNumber = (schema: z.ZodNumber) =>
   z.preprocess((value) => (value === '' || value === null ? undefined : value), schema.optional());
@@ -26,7 +26,6 @@ const ProcessBodySchema = z.object({
 });
 
 const ReviewBodySchema = z.object({
-  reviewerId: z.string(),
   detections: z.array(DetectionSchema),
 });
 
@@ -85,14 +84,17 @@ export function processCountHandler(processCount: ProcessCount) {
     });
 }
 
-/** `POST /api/counts/{id}/review` (JSON): registra la revisión humana. */
+/**
+ * `POST /api/counts/{id}/review` (JSON `{ detections }`): registra la revisión humana. El revisor
+ * es el usuario de la sesión, nunca un dato del cuerpo.
+ */
 export function reviewCountHandler(reviewCount: ReviewCount) {
-  return (request: Request, id: string): Promise<Response> =>
+  return (request: Request, id: string, reviewerId: PersonId): Promise<Response> =>
     respond(async () => {
       const body = ReviewBodySchema.parse(await request.json());
       const count = await reviewCount.execute({
         countId: toCountId(id),
-        reviewerId: toPersonId(body.reviewerId),
+        reviewerId,
         detections: body.detections.map(toDomainDetection),
       });
       return Response.json({ id: count.id, status: count.status, total: count.officialTotal });

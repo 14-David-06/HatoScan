@@ -39,3 +39,6 @@ Thumbs.db
 
 # Datos de los adaptadores locales (imágenes, JSON, registro de conteos)
 .data/
+
+# Pesos de modelos de IA (se descargan con scripts/download_model.sh)
+services/detector/models/

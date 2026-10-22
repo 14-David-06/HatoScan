@@ -1,0 +1,159 @@
+/*
+ * Tokens de diseño de HatoScan.
+ *
+ * El color de la interfaz habla el mismo idioma que las marcas sobre la foto:
+ *   amarillo  = propuesta del modelo (pendiente de una persona)
+ *   cian      = marca humana
+ *   verde     = dato oficial (revisado)
+ *   rojo      = descartado o error
+ * Si un elemento usa uno de esos colores, debe significar eso.
+ */
+
+:root {
+  /* Superficies y tinta */
+  --ground: #edf0eb;
+  --surface: #ffffff;
+  --surface-sunken: #f5f7f4;
+  --surface-raised: #ffffff;
+  --ink: #15211a;
+  --ink-muted: #56645b;
+  --ink-faint: #87938b;
+  --line: #d8ded6;
+  --line-strong: #c1cabf;
+
+  /* Dato oficial / acción principal */
+  --accent: #1e6b47;
+  --accent-strong: #175539;
+  --accent-soft: #e0eee5;
+  --accent-ink: #ffffff;
+
+  /* Propuesta del modelo / pendiente */
+  --signal: #ffd400;
+  --signal-strong: #e6be00;
+  --signal-soft: #fff3c2;
+  --signal-ink: #5e4b00;
+
+  /* Marca humana */
+  --human: #00a9bf;
+  --human-soft: #d8f4f8;
+  --human-ink: #005461;
+
+  /* Descartado / error */
+  --danger: #bf2a1f;
+  --danger-strong: #9e2017;
+  --danger-soft: #fbe6e3;
+  --danger-ink: #8a1b13;
+
+  /* Ventana de la foto: siempre oscura, como el visor de un instrumento. */
+  --viewport: #0c1410;
+  --viewport-line: rgb(255 255 255 / 0.12);
+  --hud-bg: rgb(12 20 16 / 0.78);
+  --hud-ink: #eef3ef;
+  --hud-ink-muted: rgb(238 243 239 / 0.66);
+
+  /* Marcas sobre la foto: deben contrastar con pasto verde y suelo café. */
+  --mark-model: #ffd400;
+  --mark-human: #00e5ff;
+  --mark-discarded: #ff3b30;
+
+  /* Tipografía (Archivo variable: peso + ancho) */
+  --font-sans: var(--font-archivo), 'Archivo', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --stretch-condensed: 87%;
+  --stretch-normal: 100%;
+  --stretch-expanded: 118%;
+
+  /* Escala tipográfica clásica (Bringhurst): 12 14 16 18 21 24 36 48 72 */
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-md: 1rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.3125rem;
+  --text-2xl: 1.5rem;
+  --text-3xl: 2.25rem;
+  --text-4xl: 3rem;
+  --text-5xl: 4.5rem;
+
+  /* Espaciado (base 4 px) */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.25rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-10: 2.5rem;
+  --space-12: 3rem;
+  --space-16: 4rem;
+
+  /* El radio crece con la jerarquía: control < panel < visor. */
+  --radius-sm: 0.375rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
+  --radius-full: 999px;
+
+  /* Sombras solo para lo que flota sobre otra cosa (HUD, menús, diálogos). */
+  --shadow-float: 0 1px 2px rgb(10 24 16 / 0.06), 0 8px 24px -8px rgb(10 24 16 / 0.22);
+  --shadow-dialog: 0 2px 6px rgb(10 24 16 / 0.08), 0 24px 64px -16px rgb(10 24 16 / 0.38);
+  --ring: 0 0 0 3px color-mix(in srgb, var(--accent) 28%, transparent);
+
+  /* Movimiento */
+  --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --ease-emphasized: cubic-bezier(0.2, 0, 0, 1);
+  --ease-in: cubic-bezier(0.4, 0, 1, 1);
+  --dur-1: 120ms;
+  --dur-2: 180ms;
+  --dur-3: 240ms;
+  --dur-4: 360ms;
+
+  /* Capas */
+  --z-hud: 10;
+  --z-header: 30;
+  --z-dialog: 50;
+  --z-toast: 60;
+
+  /* Estructura */
+  --header-h: 3.5rem;
+  --content-max: 76rem;
+  --content-narrow: 60rem;
+  --gutter: clamp(1rem, 3vw, 2rem);
+
+  color-scheme: light dark;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --ground: #0e1511;
+    --surface: #151e19;
+    --surface-sunken: #111915;
+    --surface-raised: #1b2620;
+    --ink: #e5ebe6;
+    --ink-muted: #9eaaa2;
+    --ink-faint: #6f7c74;
+    --line: #26322b;
+    --line-strong: #35433b;
+
+    --accent: #5dbb86;
+    --accent-strong: #7dcb9e;
+    --accent-soft: #173226;
+    --accent-ink: #08130d;
+
+    --signal-soft: #352d0c;
+    --signal-ink: #ffe066;
+
+    --human: #3ddbee;
+    --human-soft: #0b3036;
+    --human-ink: #7eebf7;
+
+    --danger: #ff8474;
+    --danger-strong: #ffa294;
+    --danger-soft: #3a1814;
+    --danger-ink: #ffb3a8;
+
+    --viewport: #08100c;
+
+    --shadow-float: 0 1px 2px rgb(0 0 0 / 0.4), 0 10px 28px -8px rgb(0 0 0 / 0.6);
+    --shadow-dialog: 0 2px 6px rgb(0 0 0 / 0.4), 0 24px 64px -16px rgb(0 0 0 / 0.75);
+    --ring: 0 0 0 3px color-mix(in srgb, var(--accent) 38%, transparent);
+  }
+}

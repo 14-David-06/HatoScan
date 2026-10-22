@@ -1,3 +1,4 @@
+from pathlib import Path
 from typing import Any
 
 import pytest
@@ -117,18 +118,63 @@ def test_detector_failure_is_reported_not_hidden() -> None:
     assert "Could not decode image" in response.json()["detail"]
 
 
+@pytest.fixture
+def default_settings(monkeypatch: pytest.MonkeyPatch) -> Any:
+    """Configuración por defecto, sin el .env local de quien corre los tests."""
+    from app.config import Settings, get_settings
+
+    monkeypatch.delenv("DETECTOR_DEFAULT_DETECTOR", raising=False)
+    monkeypatch.delenv("DETECTOR_ENABLED_DETECTORS", raising=False)
+    monkeypatch.setitem(Settings.model_config, "env_file", None)
+    get_settings.cache_clear()
+    yield
+    get_settings.cache_clear()
+
+
+@pytest.mark.usefixtures("default_settings")
 def test_catalog_lists_every_method_and_the_default() -> None:
     response = make_client(build_registry()).get("/v1/detectors")
 
     assert response.status_code == 200
     catalog = DetectorCatalog.model_validate(response.json())
     assert catalog.default_detector == "classic-cv"
-    assert [d.name for d in catalog.detectors] == ["classic-cv", "classic-cv-dark", "yolo-sahi"]
-    assert [d.available for d in catalog.detectors] == [True, True, False]
+    assert [d.name for d in catalog.detectors] == [
+        "classic-cv",
+        "classic-cv-dark",
+        "yolo-sahi",
+        "claude-vision",
+        "claude-vision-sonnet",
+        "openai-vision",
+        "openai-vision-sol",
+    ]
+    assert [d.available for d in catalog.detectors][:2] == [True, True]
 
 
-def test_unavailable_detector_is_rejected_before_downloading() -> None:
-    client = make_client({"yolo-sahi": YoloSahiDetector()}, fetch_error=AssertionError("no"))
+def test_only_enabled_methods_are_offered(
+    default_settings: Any, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from app.config import get_settings
+
+    monkeypatch.setenv("DETECTOR_ENABLED_DETECTORS", '["claude-vision"]')
+    monkeypatch.setenv("DETECTOR_DEFAULT_DETECTOR", "claude-vision")
+    get_settings.cache_clear()
+
+    catalog = make_client(build_registry()).get("/v1/detectors").json()
+
+    assert [d["name"] for d in catalog["detectors"]] == ["claude-vision"]
+    assert catalog["default_detector"] == "claude-vision"
+
+
+def test_ai_method_is_unavailable_without_model_weights(tmp_path: Path) -> None:
+    detector = YoloSahiDetector(tmp_path / "missing.onnx")
+    catalog = make_client({"yolo-sahi": detector}).get("/v1/detectors").json()
+    assert catalog["detectors"][0]["available"] is False
+
+
+def test_unavailable_detector_is_rejected_before_downloading(tmp_path: Path) -> None:
+    client = make_client(
+        {"yolo-sahi": YoloSahiDetector(tmp_path / "missing.onnx")}, fetch_error=AssertionError("no")
+    )
     response = client.post("/v1/detect", json={**REQUEST, "detector": "yolo-sahi"})
     assert response.status_code == 422
     assert "not available" in response.json()["detail"]

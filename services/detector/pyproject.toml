@@ -4,9 +4,11 @@ version = "0.1.0"
 description = "Servicio de detección de ganado en fotos aéreas (FastAPI, Cloud Run)."
 requires-python = ">=3.11"
 dependencies = [
+    "anthropic>=2.0.0",
     "fastapi>=0.141.1",
     "httpx>=0.28.1",
     "numpy>=2.4.6",
+    "onnxruntime>=1.31.0",
     "opencv-python-headless>=5.0.0.93",
     "pydantic>=2.13.5",
     "pydantic-settings>=2.15.0",
@@ -45,6 +47,10 @@ exclude = ["^app/contracts/"]
 [[tool.mypy.overrides]]
 module = "app.contracts.*"
 ignore_errors = true
+
+[[tool.mypy.overrides]]
+module = "onnxruntime.*"
+ignore_missing_imports = true
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

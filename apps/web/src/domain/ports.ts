@@ -1,3 +1,4 @@
+import type { UserAccount } from './auth/user';
 import type { Count } from './count/count';
 import type { CountId, PersonId } from './count/count-id';
 import type { Detection, ImageSize } from './count/detection';
@@ -81,4 +82,15 @@ export interface CountIdGenerator {
 
 export interface Clock {
   now(): Date;
+}
+
+/** Directorio de cuentas de usuario (hoy la tabla Usuarios de Airtable). */
+export interface UserDirectory {
+  /** Busca por número de cédula (solo dígitos). */
+  findByNationalId(nationalId: string): Promise<UserAccount | undefined>;
+}
+
+/** Verificación de contraseñas contra el hash guardado. */
+export interface PasswordHasher {
+  verify(password: string, passwordHash: string): Promise<boolean>;
 }

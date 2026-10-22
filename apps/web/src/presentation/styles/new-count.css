@@ -1,0 +1,683 @@
+/* Nuevo conteo (new-count-screen): zona de la foto, formulario y pasos de carga. */
+
+/* ---------- Disposición ---------- */
+
+.new-count__header {
+  margin-bottom: var(--space-6);
+}
+
+.new-count__header h1 {
+  margin-top: var(--space-1);
+}
+
+.new-count__layout {
+  display: grid;
+  gap: var(--space-6);
+}
+
+.new-count__photo {
+  display: grid;
+  gap: var(--space-3);
+  min-width: 0;
+  scroll-margin-top: calc(var(--header-h) + var(--space-4));
+}
+
+/* Error de la subida, bajo el visor: es donde se estaba mirando el progreso. */
+.new-count__error {
+  scroll-margin: calc(var(--header-h) + var(--space-4)) 0 var(--space-4);
+}
+
+.new-count__error-title {
+  font-weight: 600;
+}
+
+@media (min-width: 64rem) {
+  .new-count__layout {
+    grid-template-columns: minmax(0, 1fr) minmax(24rem, 29rem);
+    gap: var(--space-8);
+    align-items: start;
+  }
+
+  /* La foto acompaña al formulario mientras se recorre. */
+  .new-count__photo {
+    position: sticky;
+    top: calc(var(--header-h) + var(--space-6));
+  }
+}
+
+/* ---------- Visor de la foto (zona de carga) ---------- */
+
+.upload-zone {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.upload-zone__visor {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid var(--viewport-line);
+  border-radius: var(--radius-xl);
+  background: var(--viewport);
+  color: var(--hud-ink);
+  transition:
+    border-color var(--dur-2) var(--ease-out),
+    box-shadow var(--dur-2) var(--ease-out);
+}
+
+.upload-zone__visor:has(.upload-zone__input:focus-visible) {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+/* Tras intentar enviar sin foto. */
+.upload-zone__visor:has(.upload-zone__input:user-invalid) {
+  border-color: var(--danger);
+  box-shadow: 0 0 0 1px var(--danger);
+}
+
+.upload-zone[data-dragging] .upload-zone__visor {
+  border-color: color-mix(in srgb, var(--hud-ink) 70%, transparent);
+}
+
+.upload-zone__stage {
+  position: relative;
+  display: grid;
+  place-items: center;
+  aspect-ratio: 3 / 2;
+  min-height: 13rem;
+}
+
+@media (min-width: 64rem) {
+  .upload-zone__stage {
+    max-height: calc(100dvh - var(--header-h) - 15rem);
+  }
+}
+
+/*
+ * El campo real queda dentro del visor, invisible pero enfocable: así el aviso nativo de «campo
+ * obligatorio» apunta a la zona de la foto.
+ */
+.upload-zone__input {
+  position: absolute;
+  bottom: var(--space-8);
+  left: 50%;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.upload-zone__prompt {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: var(--space-1);
+  padding: var(--space-8) var(--space-6);
+  text-align: center;
+  cursor: pointer;
+  transition: background-color var(--dur-2) var(--ease-out);
+}
+
+.upload-zone__prompt:hover,
+.upload-zone[data-dragging] .upload-zone__prompt {
+  background: rgb(255 255 255 / 0.03);
+}
+
+/* Esquinas de visor: el marco donde caerá la foto. */
+.upload-zone__corners {
+  --corner: var(--hud-ink-muted);
+  --corner-len: 1.25rem;
+  --corner-w: 2px;
+
+  position: absolute;
+  inset: var(--space-5);
+  background:
+    linear-gradient(var(--corner), var(--corner)) top left / var(--corner-len) var(--corner-w),
+    linear-gradient(var(--corner), var(--corner)) top left / var(--corner-w) var(--corner-len),
+    linear-gradient(var(--corner), var(--corner)) top right / var(--corner-len) var(--corner-w),
+    linear-gradient(var(--corner), var(--corner)) top right / var(--corner-w) var(--corner-len),
+    linear-gradient(var(--corner), var(--corner)) bottom left / var(--corner-len) var(--corner-w),
+    linear-gradient(var(--corner), var(--corner)) bottom left / var(--corner-w) var(--corner-len),
+    linear-gradient(var(--corner), var(--corner)) bottom right / var(--corner-len) var(--corner-w),
+    linear-gradient(var(--corner), var(--corner)) bottom right / var(--corner-w) var(--corner-len);
+  background-repeat: no-repeat;
+  opacity: 0.55;
+  pointer-events: none;
+  transition:
+    opacity var(--dur-3) var(--ease-emphasized),
+    transform var(--dur-3) var(--ease-emphasized);
+}
+
+.upload-zone__prompt:hover .upload-zone__corners {
+  opacity: 0.8;
+}
+
+/* Al arrastrar, el marco se cierra sobre la zona: responde a la foto que llega. */
+.upload-zone[data-dragging] .upload-zone__corners {
+  opacity: 1;
+  transform: scale(0.97);
+}
+
+.upload-zone__badge {
+  display: grid;
+  place-items: center;
+  width: 3.25rem;
+  height: 3.25rem;
+  margin-bottom: var(--space-3);
+  border: 1px solid var(--viewport-line);
+  border-radius: var(--radius-full);
+  background: rgb(255 255 255 / 0.06);
+  color: var(--hud-ink);
+  transition: background-color var(--dur-2) var(--ease-out);
+}
+
+.upload-zone__prompt:hover .upload-zone__badge {
+  background: rgb(255 255 255 / 0.1);
+}
+
+.upload-zone__title {
+  color: var(--hud-ink);
+  font-size: var(--text-lg);
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.upload-zone__sub {
+  color: var(--hud-ink-muted);
+  font-size: var(--text-sm);
+}
+
+.upload-zone__sub + .upload-zone__sub {
+  margin-top: var(--space-2);
+  font-size: var(--text-xs);
+  font-stretch: var(--stretch-condensed);
+  font-weight: 500;
+}
+
+/* Al arrastrar solo queda la instrucción de soltar. */
+.upload-zone[data-dragging] .upload-zone__sub {
+  visibility: hidden;
+}
+
+.upload-zone[data-dragging] .upload-zone__badge {
+  background: rgb(255 255 255 / 0.12);
+}
+
+.upload-zone__coarse {
+  display: none;
+}
+
+@media (pointer: coarse) {
+  .upload-zone__fine {
+    display: none;
+  }
+
+  .upload-zone__coarse {
+    display: inline;
+  }
+}
+
+.upload-zone__image {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  transition: opacity var(--dur-3) var(--ease-out);
+}
+
+.upload-zone__image[data-loading] {
+  opacity: 0;
+}
+
+.upload-zone__placeholder {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-3);
+  max-width: 22rem;
+  padding: var(--space-6);
+  color: var(--hud-ink-muted);
+  font-size: var(--text-sm);
+  text-align: center;
+}
+
+.upload-zone__drop {
+  position: absolute;
+  inset: var(--space-3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  border: 1.5px dashed color-mix(in srgb, var(--hud-ink) 70%, transparent);
+  border-radius: var(--radius-lg);
+  background: rgb(8 16 12 / 0.72);
+  color: var(--hud-ink);
+  font-weight: 600;
+  pointer-events: none;
+  animation: upload-drop-in var(--dur-2) var(--ease-out) both;
+}
+
+@keyframes upload-drop-in {
+  from {
+    opacity: 0;
+  }
+}
+
+/* Pie del visor: datos del archivo, o los pasos mientras se envía. */
+.upload-zone__readout {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3) var(--space-6);
+  padding: var(--space-3) var(--space-4);
+  border-top: 1px solid var(--viewport-line);
+  background: rgb(255 255 255 / 0.035);
+}
+
+.upload-zone__facts {
+  flex: 1 1 18rem;
+  flex-wrap: nowrap;
+  gap: var(--space-6);
+  min-width: 0;
+}
+
+.upload-zone__facts dt {
+  color: var(--hud-ink-muted);
+}
+
+.upload-zone__facts dd {
+  color: var(--hud-ink);
+  white-space: nowrap;
+}
+
+.upload-zone__facts > div:not(.upload-zone__fact-name) {
+  flex-shrink: 0;
+}
+
+.upload-zone__fact-name {
+  flex: 0 1 auto;
+}
+
+.upload-zone__fact-name dd {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.upload-zone__change {
+  --button-bg: rgb(255 255 255 / 0.06);
+  --button-bg-hover: rgb(255 255 255 / 0.13);
+  --button-ink: var(--hud-ink);
+  --button-line: var(--viewport-line);
+}
+
+@media (max-width: 30rem) {
+  .upload-zone__facts {
+    flex-wrap: wrap;
+    gap: var(--space-3) var(--space-6);
+  }
+
+  .upload-zone__fact-name {
+    flex-basis: 100%;
+  }
+}
+
+/* ---------- Pasos: subir, detectar, revisar ---------- */
+
+.upload-steps {
+  display: grid;
+  gap: var(--space-3);
+  width: 100%;
+  padding: var(--space-1) 0;
+}
+
+.upload-steps__list {
+  display: grid;
+  gap: var(--space-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+@media (min-width: 40rem) {
+  .upload-steps__list {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--space-5);
+  }
+}
+
+.upload-steps__step {
+  display: grid;
+  grid-template-columns: 1.5rem minmax(0, 1fr);
+  gap: var(--space-3);
+  align-items: start;
+}
+
+.upload-steps__marker {
+  display: grid;
+  place-items: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  border: 1px solid var(--viewport-line);
+  border-radius: var(--radius-full);
+  color: var(--hud-ink-muted);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  transition:
+    background-color var(--dur-2) var(--ease-out),
+    border-color var(--dur-2) var(--ease-out),
+    color var(--dur-2) var(--ease-out);
+}
+
+.upload-steps__step[data-state='active'] .upload-steps__marker {
+  border-color: transparent;
+  background: var(--hud-ink);
+  color: var(--viewport);
+}
+
+.upload-steps__step[data-state='done'] .upload-steps__marker {
+  border-color: color-mix(in srgb, var(--hud-ink) 45%, transparent);
+  color: var(--hud-ink);
+}
+
+/* El paso terminado se confirma con un golpe corto del visto. */
+.upload-steps__step[data-state='done'] .upload-steps__marker .icon {
+  animation: upload-step-done var(--dur-3) var(--ease-emphasized) both;
+}
+
+@keyframes upload-step-done {
+  from {
+    opacity: 0;
+    transform: scale(0.5);
+  }
+}
+
+.upload-steps__body {
+  display: grid;
+  gap: 0.2rem;
+  min-width: 0;
+}
+
+.upload-steps__title {
+  color: var(--hud-ink);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  line-height: 1.5rem;
+}
+
+.upload-steps__step[data-state='pending'] .upload-steps__title {
+  color: var(--hud-ink-muted);
+}
+
+.upload-steps__detail {
+  display: grid;
+  gap: var(--space-2);
+  color: var(--hud-ink-muted);
+  font-size: var(--text-xs);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.4;
+}
+
+.upload-steps__detail > span {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0 var(--space-2);
+  min-width: 0;
+}
+
+.upload-steps__step[data-state='active'] .upload-steps__detail {
+  color: var(--hud-ink);
+}
+
+.upload-steps__figure {
+  color: var(--hud-ink);
+  font-weight: 600;
+}
+
+.upload-steps__muted {
+  color: var(--hud-ink-muted);
+}
+
+.upload-steps__method {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--hud-ink);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.upload-steps__clock {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  color: var(--hud-ink);
+  font-weight: 600;
+}
+
+.upload-steps__clock .icon {
+  align-self: center;
+  color: var(--hud-ink-muted);
+}
+
+.upload-steps .progress {
+  background: rgb(255 255 255 / 0.14);
+}
+
+.upload-steps .progress__bar {
+  background: var(--hud-ink);
+}
+
+/* La detección es trabajo del modelo: el mismo amarillo de sus marcas y del barrido. */
+.upload-steps__model .progress__bar {
+  background: var(--mark-model);
+}
+
+.upload-steps__note {
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--viewport-line);
+  color: var(--hud-ink-muted);
+  font-size: var(--text-xs);
+}
+
+/* ---------- Formulario ---------- */
+
+.new-count__panel {
+  display: grid;
+  gap: var(--space-5);
+  min-width: 0;
+  /* Recorta el pie a las esquinas del panel; `clip` no crea contenedor de scroll y deja el sticky. */
+  overflow: clip;
+}
+
+.new-count__fields {
+  display: grid;
+  gap: var(--space-5);
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.new-count__row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(9.5rem, 1fr));
+  gap: var(--space-4);
+  align-items: start;
+}
+
+.new-count__species {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.new-count__species > legend {
+  margin-bottom: var(--space-2);
+  padding: 0;
+}
+
+.new-count__species .segmented {
+  display: grid;
+  width: 100%;
+}
+
+.new-count__section {
+  padding-top: var(--space-5);
+  border-top: 1px solid var(--line);
+}
+
+.new-count__more {
+  margin-top: calc(var(--space-1) * -1);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--line);
+}
+
+.new-count__more > summary {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 2.5rem;
+  margin: 0 calc(var(--space-2) * -1);
+  padding: 0 var(--space-2);
+  border-radius: var(--radius-md);
+  color: var(--ink);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  list-style: none;
+  cursor: pointer;
+  transition: background-color var(--dur-2) var(--ease-out);
+}
+
+.new-count__more > summary::-webkit-details-marker {
+  display: none;
+}
+
+.new-count__more > summary:hover {
+  background: color-mix(in srgb, var(--ink) 5%, transparent);
+}
+
+.new-count__chevron {
+  color: var(--ink-muted);
+  transform: rotate(-90deg);
+  transition: transform var(--dur-3) var(--ease-emphasized);
+}
+
+.new-count__more[open] .new-count__chevron {
+  transform: none;
+}
+
+.new-count__optional {
+  margin-left: auto;
+  color: var(--ink-muted);
+  font-size: var(--text-xs);
+  font-stretch: var(--stretch-condensed);
+  font-weight: 500;
+}
+
+.new-count__more-body {
+  display: grid;
+  gap: var(--space-4);
+  padding: var(--space-3) 0 var(--space-1);
+}
+
+/* Unidad dentro del campo numérico (m, °). */
+.new-count__unit {
+  position: relative;
+  display: block;
+}
+
+.new-count__unit::after {
+  content: attr(data-unit);
+  position: absolute;
+  top: 50%;
+  right: 0.75rem;
+  color: var(--ink-muted);
+  font-size: var(--text-sm);
+  pointer-events: none;
+  transform: translateY(-50%);
+}
+
+.new-count .new-count__unit input {
+  padding-right: 2rem;
+  font-variant-numeric: tabular-nums;
+  appearance: textfield;
+}
+
+.new-count__unit input::-webkit-inner-spin-button,
+.new-count__unit input::-webkit-outer-spin-button {
+  margin: 0;
+  appearance: none;
+}
+
+.new-count__submit {
+  padding-top: var(--space-5);
+  border-top: 1px solid var(--line);
+}
+
+/*
+ * En escritorio el formulario puede ser más alto que la ventana: el pie del panel, con la acción
+ * principal, queda pegado al borde inferior y el resto del panel pasa por debajo de su línea.
+ */
+@media (min-width: 64rem) {
+  .new-count__submit {
+    position: sticky;
+    bottom: 0;
+    z-index: 1;
+    margin: 0 calc(var(--space-6) * -1) calc(var(--space-6) * -1);
+    padding: var(--space-4) var(--space-6) var(--space-6);
+    background: var(--surface);
+  }
+}
+
+/* iOS amplía la página al enfocar campos de menos de 16 px. */
+@media (max-width: 40rem) {
+  .new-count .field input:not([type='radio']),
+  .new-count .field textarea {
+    font-size: var(--text-md);
+  }
+}
+
+/* ---------- Esqueleto (loading.tsx) ---------- */
+
+/* El visor ya es oscuro mientras carga: la página no pasa de claro a oscuro al aparecer. */
+.new-count-skeleton__visor {
+  display: block;
+  aspect-ratio: 3 / 2;
+  min-height: 13rem;
+  border: 1px solid var(--viewport-line);
+  border-radius: var(--radius-xl);
+  background:
+    linear-gradient(90deg, transparent 0%, rgb(255 255 255 / 0.04) 50%, transparent 100%) 0 0 / 200%
+      100% no-repeat,
+    var(--viewport);
+  animation: shimmer 1.4s var(--ease-out) infinite;
+}
+
+@media (min-width: 64rem) {
+  .new-count-skeleton__visor {
+    max-height: calc(100dvh - var(--header-h) - 15rem);
+  }
+}
+
+.new-count-skeleton__line {
+  height: 0.875rem;
+}
+
+.new-count-skeleton__control {
+  height: 2.5rem;
+  border-radius: var(--radius-md);
+}
+
+.new-count-skeleton__option {
+  height: 2.75rem;
+  border-radius: var(--radius-md);
+}
+
+.new-count-skeleton__button {
+  height: 3rem;
+  border-radius: var(--radius-md);
+}

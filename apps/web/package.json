@@ -10,7 +10,8 @@
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "hash-password": "node scripts/hash-password.ts"
   },
   "dependencies": {
     "@hatoscan/contracts": "^0.1.0",

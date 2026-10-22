@@ -16,6 +16,12 @@ const EnvSchema = z.object({
   LOCAL_DATA_DIR: z.string().min(1).default('.data'),
   /** Secreto HMAC de las URLs firmadas del almacenamiento local. */
   LOCAL_STORAGE_SIGNING_SECRET: z.string().min(32),
+  /** Secreto HMAC de la cookie de sesión. */
+  AUTH_SESSION_SECRET: z.string().min(32),
+  /** Airtable (D2 resuelta: base de HatoScan). */
+  AIRTABLE_API_TOKEN: z.string().min(1),
+  AIRTABLE_BASE_ID: z.string().regex(/^app[A-Za-z0-9]{14}$/),
+  AIRTABLE_USUARIOS_TABLE_ID: z.string().regex(/^tbl[A-Za-z0-9]{14}$/),
 });
 
 export type Env = z.infer<typeof EnvSchema>;

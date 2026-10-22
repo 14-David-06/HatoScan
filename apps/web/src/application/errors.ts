@@ -10,3 +10,10 @@ export class CountNotFoundError extends ApplicationError {
     super(`Count ${countId} not found`);
   }
 }
+
+/** Cédula o contraseña incorrectas, o cuenta inactiva. Un solo error: no revela cuál falló. */
+export class InvalidCredentialsError extends ApplicationError {
+  constructor() {
+    super('Invalid credentials');
+  }
+}

@@ -2,7 +2,10 @@
 
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
+import { useConfirm } from '../ui/confirm-dialog';
+import { AlertTriangleIcon, RefreshIcon, ScanIcon } from '../ui/icons';
 import type { DetectionMethodsView } from '../view-models';
+import { formatElapsed, useElapsedSince } from './elapsed';
 import { MethodSelect, useMethod } from './method-select';
 
 export type DetectMode = 'first' | 'retry' | 'again';
@@ -25,20 +28,31 @@ export function DetectPanel({
 }) {
   const router = useRouter();
   const [method, setMethod] = useMethod(catalog);
-  const [running, setRunning] = useState(false);
+  const [startedAt, setStartedAt] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [confirm, dialog] = useConfirm();
+  const elapsed = useElapsedSince(startedAt);
+  const running = startedAt !== null;
 
   const run = async () => {
+    if (running) return;
     if (
       mode === 'again' &&
-      !window.confirm(
-        'La propuesta actual dejará de estar vigente (se conserva en el historial) y se perderán ' +
-          'las marcas que no hayas confirmado. ¿Volver a detectar?',
-      )
+      !(await confirm({
+        title: '¿Volver a detectar?',
+        body: (
+          <p>
+            La propuesta actual se conserva en el historial, pero se perderán las marcas que no
+            hayas confirmado.
+          </p>
+        ),
+        confirmLabel: 'Volver a detectar',
+        tone: 'danger',
+      }))
     ) {
       return;
     }
-    setRunning(true);
+    setStartedAt(Date.now());
     setError(null);
     try {
       const response = await fetch(`/api/counts/${countId}/process`, {
@@ -51,27 +65,52 @@ export function DetectPanel({
         setError(body.error ?? `Error ${response.status}`);
       }
       router.refresh();
+    } catch {
+      setError('No se pudo conectar con el servidor. Revisa la red y vuelve a intentarlo.');
     } finally {
-      setRunning(false);
+      setStartedAt(null);
     }
   };
 
+  const Icon = mode === 'first' ? ScanIcon : RefreshIcon;
+
   return (
-    <div className="detect-panel">
+    <div className={`detect-panel detect-panel--${mode}`}>
       <MethodSelect catalog={catalog} value={method} onChange={setMethod} disabled={running} />
-      <button
-        type="button"
-        className={mode === 'again' ? 'button' : 'button button--primary'}
-        onClick={run}
-        disabled={running || (catalog !== null && method === '')}
-      >
-        {running ? 'Detectando animales…' : BUTTON_LABELS[mode]}
-      </button>
-      {error && (
-        <p className="form-error" role="alert">
-          {error}
+      <div className="detect-panel__actions">
+        <button
+          type="button"
+          className={mode === 'again' ? 'button' : 'button button--primary'}
+          onClick={run}
+          aria-busy={running}
+          disabled={!running && catalog !== null && method === ''}
+        >
+          {running ? <span className="spinner" aria-hidden="true" /> : <Icon size={16} />}
+          {BUTTON_LABELS[mode]}
+        </button>
+        {running && (
+          <p className="detect-panel__status" aria-hidden="true">
+            Detectando animales
+            <span className="detect-panel__elapsed">{formatElapsed(elapsed)}</span>
+          </p>
+        )}
+      </div>
+      {/* Montada desde el inicio: una región viva que aparece ya con texto no siempre se anuncia. */}
+      <p className="visually-hidden" role="status">
+        {running ? 'Detectando animales.' : ''}
+      </p>
+      {running && (
+        <p className="detect-panel__note">
+          Según el método, la detección puede tardar unos minutos. Mantén esta página abierta.
         </p>
       )}
+      {error && (
+        <div className="callout callout--danger" role="alert">
+          <AlertTriangleIcon size={16} />
+          <p>{error}</p>
+        </div>
+      )}
+      {dialog}
     </div>
   );
 }

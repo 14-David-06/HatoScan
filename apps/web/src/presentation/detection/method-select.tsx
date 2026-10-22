@@ -1,9 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { useId, useState } from 'react';
+import { AlertTriangleIcon, InfoIcon } from '../ui/icons';
 import type { DetectionMethodsView } from '../view-models';
 
 interface MethodSelectProps {
+  /** Nombre del grupo de radios. Por defecto uno único por instancia. */
   readonly name?: string;
   readonly catalog: DetectionMethodsView;
   readonly value: string;
@@ -12,46 +14,91 @@ interface MethodSelectProps {
 }
 
 /**
- * Selector del método de detección. Los métodos no disponibles se muestran deshabilitados.
- * Si el servicio no respondió, ofrece solo «el predeterminado del servicio» (valor vacío).
+ * Selector del método de detección: una línea por método y, debajo de la lista, la descripción
+ * del elegido (así las opciones no se mueven al cambiar y caben en una columna estrecha). Los
+ * métodos no disponibles se ven pero no se pueden elegir. Si el servicio no respondió, explica que
+ * se usará su predeterminado (valor vacío).
  */
 export function MethodSelect({ name, catalog, value, onChange, disabled }: MethodSelectProps) {
-  const selected = catalog?.methods.find((m) => m.name === value);
+  const ownName = useId();
+  const groupName = name ?? ownName;
+
+  if (!catalog) {
+    return (
+      <div className="method-select">
+        <p className="method-select__legend">Método de detección</p>
+        <div className="callout">
+          <InfoIcon size={16} />
+          <p>
+            No se pudo consultar la lista de métodos. Se usará el método predeterminado del servicio
+            de detección.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  const selected = catalog.methods.find((m) => m.name === value);
+  const noneAvailable = !catalog.methods.some((m) => m.available);
+  const noteId = `${groupName}-note`;
 
   return (
-    <label className="field">
-      <span>Método de detección</span>
-      <select
-        name={name}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        disabled={disabled}
-      >
-        {catalog ? (
-          catalog.methods.map((m) => (
-            <option key={m.name} value={m.name} disabled={!m.available}>
-              {m.label}
-              {m.name === catalog.defaultMethod ? ' (predeterminado)' : ''}
-              {m.available ? '' : ' — no disponible'}
-            </option>
-          ))
-        ) : (
-          <option value="">Predeterminado del servicio</option>
-        )}
-      </select>
-      <small className="muted">
-        {catalog
-          ? selected && (
-              <>
-                {selected.description}{' '}
-                <code>
-                  {selected.name}@{selected.version}
-                </code>
-              </>
-            )
-          : 'No se pudo consultar la lista de métodos; se usará el predeterminado del servicio.'}
-      </small>
-    </label>
+    <fieldset className="method-select" disabled={disabled}>
+      <legend className="method-select__legend">Método de detección</legend>
+      <div className="method-select__options">
+        {catalog.methods.map((m) => {
+          const descriptionId = `${groupName}-${m.name}`;
+          return (
+            <label
+              key={m.name}
+              className="method-option"
+              data-unavailable={m.available ? undefined : true}
+            >
+              <input
+                type="radio"
+                className="method-option__input"
+                name={groupName}
+                value={m.name}
+                checked={value === m.name}
+                onChange={() => onChange(m.name)}
+                disabled={!m.available}
+                aria-describedby={
+                  !m.available ? descriptionId : value === m.name ? noteId : undefined
+                }
+              />
+              <span className="method-option__radio" aria-hidden="true" />
+              <span className="method-option__main">
+                <span className="method-option__label">
+                  {m.label}
+                  {m.name === catalog.defaultMethod && (
+                    <span className="method-option__badge">Predeterminado</span>
+                  )}
+                </span>
+                {!m.available && (
+                  <span className="method-option__desc" id={descriptionId}>
+                    No disponible por ahora en el servicio de detección.
+                  </span>
+                )}
+              </span>
+            </label>
+          );
+        })}
+      </div>
+      {selected && (
+        <p className="method-select__note" id={noteId}>
+          {selected.description}{' '}
+          <span className="tag">
+            {selected.name}@{selected.version}
+          </span>
+        </p>
+      )}
+      {noneAvailable && (
+        <div className="callout callout--danger" role="alert">
+          <AlertTriangleIcon size={16} />
+          <p>Ningún método está disponible ahora. Revisa el servicio de detección.</p>
+        </div>
+      )}
+    </fieldset>
   );
 }
 
@@ -64,4 +111,9 @@ export function initialMethod(catalog: DetectionMethodsView): string {
 
 export function useMethod(catalog: DetectionMethodsView) {
   return useState(() => initialMethod(catalog));
+}
+
+/** Nombre legible del método elegido, para los mensajes de progreso; `null` si es el del servicio. */
+export function methodLabel(catalog: DetectionMethodsView, value: string): string | null {
+  return catalog?.methods.find((m) => m.name === value)?.label ?? null;
 }

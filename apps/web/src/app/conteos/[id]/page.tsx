@@ -4,7 +4,8 @@ import { CountNotFoundError } from '@/application/errors';
 import { getContainer } from '@/composition/container';
 import { InvalidValueError, toCountId } from '@/domain/index';
 import { CountScreen } from '@/presentation/screens/count-screen';
-import { toCountDetail } from '@/presentation/view-models';
+import { toCountDetail, toSessionUser } from '@/presentation/view-models';
+import { requireUser } from '../../_auth/session';
 
 export const dynamic = 'force-dynamic';
 
@@ -19,14 +20,20 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function Page({ params }: Props) {
   const { id } = await params;
+  const user = await requireUser(`/conteos/${id}`);
   const detail = await loadDetail(id);
+  // Revisado y procesando no muestran el selector de métodos; procesando se refresca cada pocos
+  // segundos y no debe consultar al detector mientras trabaja.
+  const { status } = detail.count;
   const catalog =
-    detail.count.status === 'revisado'
+    status === 'revisado' || status === 'procesando'
       ? null
       : await getContainer()
           .listDetectionMethods.execute()
           .catch(() => null);
-  return <CountScreen count={toCountDetail(detail)} catalog={catalog} />;
+  return (
+    <CountScreen count={toCountDetail(detail)} catalog={catalog} viewer={toSessionUser(user)} />
+  );
 }
 
 async function loadDetail(id: string) {
