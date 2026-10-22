@@ -6,6 +6,8 @@ const withoutTrailingSlash = (url: string): string => url.replace(/\/+$/, '');
 const EnvSchema = z.object({
   DETECTOR_BASE_URL: z.string().url().transform(withoutTrailingSlash),
   DETECTOR_TIMEOUT_MS: z.coerce.number().int().positive().default(120_000),
+  /** Token compartido con el detector; va en `Authorization: Bearer` en cada llamada. */
+  DETECTOR_API_TOKEN: z.string().min(16),
   /** URL pública de la app; base de las URLs firmadas que reciben el navegador y el detector. */
   APP_BASE_URL: z.string().url().transform(withoutTrailingSlash),
   /** Vigencia de las URLs de lectura de imágenes, en segundos. */

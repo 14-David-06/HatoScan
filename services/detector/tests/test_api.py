@@ -3,6 +3,7 @@ from typing import Any
 import pytest
 from fastapi.testclient import TestClient
 
+from app.api.auth import require_api_token
 from app.api.images import ImageDownloadError
 from app.api.routes import get_image_fetcher
 from app.contracts.count_result_schema import CountResult
@@ -58,6 +59,8 @@ def make_client(detectors: dict[str, Detector], fetch_error: Exception | None = 
         return IMAGE
 
     app.dependency_overrides[get_image_fetcher] = lambda: fetch
+    # La autenticación se prueba aparte (test_auth.py); aquí se desactiva.
+    app.dependency_overrides[require_api_token] = lambda: None
     return TestClient(app)
 
 

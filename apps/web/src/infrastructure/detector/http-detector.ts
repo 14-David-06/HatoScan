@@ -19,7 +19,7 @@ export class DetectorServiceError extends Error {
 export interface HttpDetectorOptions {
   readonly baseUrl: string;
   readonly timeoutMs: number;
-  /** Token de identidad para Cloud Run (IAM). Pendiente de D4. */
+  /** Token para `Authorization: Bearer`: hoy el secreto compartido; en Cloud Run podrá ser IAM. */
   readonly getAuthToken?: () => Promise<string>;
   readonly fetch?: typeof fetch;
 }

@@ -7,6 +7,7 @@ import { ProcessCount } from '@/application/count/process-count';
 import { RegisterCount } from '@/application/count/register-count';
 import { ReviewCount } from '@/application/count/review-count';
 import type { Clock } from '@/domain/index';
+import { LoginRateLimiter } from '@/infrastructure/auth/login-rate-limiter';
 import { getEnv } from '@/infrastructure/config/env';
 import { JsonFileCountRepository } from '@/infrastructure/counts/json-file-count-repository';
 import { HttpDetector } from '@/infrastructure/detector/http-detector';
@@ -33,6 +34,7 @@ function createContainer() {
   const detector = new HttpDetector({
     baseUrl: env.DETECTOR_BASE_URL,
     timeoutMs: env.DETECTOR_TIMEOUT_MS,
+    getAuthToken: () => Promise.resolve(env.DETECTOR_API_TOKEN),
   });
   const imageUrlTtlSeconds = env.IMAGE_URL_TTL_SECONDS;
 
@@ -44,6 +46,7 @@ function createContainer() {
     getCountDetail: new GetCountDetail({ counts, results, storage, imageUrlTtlSeconds }),
     processCount: new ProcessCount({ counts, detector, storage, results, imageUrlTtlSeconds }),
     reviewCount: new ReviewCount({ counts, results, clock }),
+    loginAttempts: new LoginRateLimiter(),
   };
 }
 

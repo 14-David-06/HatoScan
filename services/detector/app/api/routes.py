@@ -7,6 +7,7 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from starlette.concurrency import run_in_threadpool
 
+from app.api.auth import require_api_token
 from app.api.images import ImageDownloadError, download_image
 from app.config import Settings, get_settings
 from app.contracts.count_result_schema import CountResult
@@ -25,6 +26,8 @@ from app.domain.detector import (
 ImageFetcher = Callable[[str], Awaitable[bytes]]
 
 router = APIRouter()
+# /health queda abierto para el chequeo de Cloud Run; todo /v1/* exige el token compartido.
+protected = APIRouter(prefix="/v1", dependencies=[Depends(require_api_token)])
 
 
 def get_registry(request: Request) -> dict[str, Detector]:
@@ -36,6 +39,7 @@ def get_image_fetcher(settings: Annotated[Settings, Depends(get_settings)]) -> I
     async def fetch(url: str) -> bytes:
         return await download_image(
             url,
+            allowed_hosts=settings.allowed_image_hosts,
             max_bytes=settings.max_image_bytes,
             timeout_s=settings.image_download_timeout_s,
         )
@@ -48,7 +52,7 @@ def health() -> dict[str, str]:
     return {"status": "ok"}
 
 
-@router.get("/v1/detectors")
+@protected.get("/detectors")
 def list_detectors(
     registry: Annotated[dict[str, Detector], Depends(get_registry)],
     settings: Annotated[Settings, Depends(get_settings)],
@@ -68,7 +72,7 @@ def list_detectors(
     )
 
 
-@router.post("/v1/detect", response_model_exclude_none=True)
+@protected.post("/detect", response_model_exclude_none=True)
 async def detect(
     body: DetectRequest,
     registry: Annotated[dict[str, Detector], Depends(get_registry)],
@@ -127,3 +131,6 @@ def to_contract_detections(output: DetectorOutput) -> list[Detection]:
         )
         for index, raw in enumerate(output.detections, start=1)
     ]
+
+
+router.include_router(protected)
