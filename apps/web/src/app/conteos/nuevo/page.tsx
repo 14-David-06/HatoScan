@@ -13,9 +13,11 @@ const farmToday = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Bogota' 
 
 export default async function Page() {
   if (!canReview(await requireUser('/conteos/nuevo'))) redirect('/conteos');
-  // Si el servicio de detección no responde, la carga sigue siendo posible.
-  const catalog = await getContainer()
-    .listDetectionMethods.execute()
-    .catch(() => null);
-  return <NewCountScreen today={farmToday.format(new Date())} catalog={catalog} />;
+  const container = getContainer();
+  const [catalog, farms] = await Promise.all([
+    // Si el servicio de detección no responde, la carga sigue siendo posible.
+    container.listDetectionMethods.execute().catch(() => null),
+    container.listFarms.execute(),
+  ]);
+  return <NewCountScreen today={farmToday.format(new Date())} catalog={catalog} farms={farms} />;
 }

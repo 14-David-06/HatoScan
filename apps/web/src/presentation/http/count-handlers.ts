@@ -10,6 +10,7 @@ const optionalNumber = (schema: z.ZodNumber) =>
   z.preprocess((value) => (value === '' || value === null ? undefined : value), schema.optional());
 
 const NewCountFormSchema = z.object({
+  farm: z.string().trim().min(1, 'La finca es obligatoria').max(100),
   pastureId: z.string().trim().min(1, 'El potrero es obligatorio'),
   species: z.enum(SPECIES),
   flightDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Fecha de vuelo inválida (AAAA-MM-DD)'),
@@ -39,6 +40,7 @@ export function createCountHandler(registerCount: RegisterCount) {
         return problem(400, 'Adjunta la foto aérea original.');
       }
       const fields = NewCountFormSchema.parse({
+        farm: form.get('farm'),
         pastureId: form.get('pastureId'),
         species: form.get('species'),
         flightDate: form.get('flightDate'),
@@ -48,6 +50,7 @@ export function createCountHandler(registerCount: RegisterCount) {
       });
 
       const count = await registerCount.execute({
+        farm: fields.farm,
         pastureId: fields.pastureId,
         species: fields.species,
         // Fecha civil del vuelo, guardada a mediodía UTC para que no cambie de día por zona horaria.

@@ -62,6 +62,7 @@ Regla de dependencias: `presentation → application → domain ← infrastructu
 Tabla `Conteos` (base por confirmar, ver D2). Campos mínimos:
 
 - ID Conteo (`SIRIUS-CONTEO-XXXX`)
+- Finca (texto libre; la app sugiere las ya usadas)
 - Potrero (FK simbólica; ver D3)
 - Fecha de vuelo, Fecha de carga
 - Especie (Búfala, Bovino, Otro)

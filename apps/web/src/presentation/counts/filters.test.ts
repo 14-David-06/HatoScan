@@ -12,6 +12,7 @@ import {
 
 const count = (overrides: Partial<CountSummaryView> & Pick<CountSummaryView, 'id'>) =>
   ({
+    farm: 'Guaicaramo',
     pastureId: 'Potrero 12',
     species: 'bufala',
     flightDate: '2026-09-23',
@@ -70,6 +71,11 @@ describe('matchesSearch', () => {
     expect(matchesSearch(ceiba, '0005')).toBe(true);
     expect(matchesSearch(ceiba, 'potrero 12')).toBe(false);
     expect(matchesSearch(ceiba, '')).toBe(true);
+  });
+
+  it('also finds counts by farm', () => {
+    expect(matchesSearch(counts[0]!, 'guaicaramo')).toBe(true);
+    expect(matchesSearch(counts[0]!, 'la esperanza')).toBe(false);
   });
 });
 

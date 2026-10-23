@@ -508,6 +508,51 @@
   align-items: start;
 }
 
+.new-count__farms {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+/* Fincas ya usadas: un toque llena el campo con el nombre exacto. */
+.new-count__farm {
+  max-width: 100%;
+  min-height: 2rem;
+  overflow: hidden;
+  padding: 0.25rem 0.7rem;
+  border: 1px solid var(--line-strong);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--ink);
+  font-size: var(--text-xs);
+  font-weight: 500;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    border-color var(--dur-2) var(--ease-out),
+    background-color var(--dur-2) var(--ease-out);
+}
+
+.new-count__farm:hover:not(:disabled) {
+  border-color: var(--ink-faint);
+}
+
+.new-count__farm[aria-pressed='true'] {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 12%, var(--surface));
+}
+
+.new-count__farm:focus-visible {
+  box-shadow: var(--ring);
+  outline: none;
+}
+
+.new-count__farm:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
 .new-count__species {
   min-width: 0;
   margin: 0;

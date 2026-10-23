@@ -29,14 +29,22 @@ const ANNOUNCEMENTS: Readonly<Record<Phase, string>> = {
 
 const DEFAULT_SPECIES: Species = 'bufala';
 
+/** Fincas a la vista como etiquetas; el resto aparece al escribir (datalist). */
+const FARM_CHIPS = 6;
+
 export function NewCountScreen({
   today,
   catalog,
+  farms,
 }: {
   today: string;
   catalog: DetectionMethodsView;
+  /** Fincas de conteos anteriores, la más reciente primero. */
+  farms: readonly string[];
 }) {
   const router = useRouter();
+  const [farm, setFarm] = useState('');
+  const farmId = useId();
   const [method, setMethod] = useMethod(catalog);
   // El radio del método no es un campo del conteo: se quita del FormData antes de enviarlo.
   const methodField = useId();
@@ -182,6 +190,45 @@ export function NewCountScreen({
         <div className="panel new-count__panel">
           <fieldset className="new-count__fields" disabled={busy}>
             <legend className="visually-hidden">Datos del conteo</legend>
+
+            <div className="field">
+              <label className="field__label" htmlFor={farmId}>
+                Finca
+              </label>
+              <input
+                id={farmId}
+                name="farm"
+                required
+                maxLength={100}
+                placeholder="Ej. Guaicaramo"
+                autoComplete="off"
+                list={farms.length > 0 ? `${farmId}-list` : undefined}
+                value={farm}
+                onChange={(event) => setFarm(event.target.value)}
+              />
+              {farms.length > 0 && (
+                <>
+                  <datalist id={`${farmId}-list`}>
+                    {farms.map((f) => (
+                      <option key={f} value={f} />
+                    ))}
+                  </datalist>
+                  <div className="new-count__farms" role="group" aria-label="Fincas usadas antes">
+                    {farms.slice(0, FARM_CHIPS).map((f) => (
+                      <button
+                        key={f}
+                        type="button"
+                        className="new-count__farm"
+                        aria-pressed={farm.trim() === f}
+                        onClick={() => setFarm(f)}
+                      >
+                        {f}
+                      </button>
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
 
             <div className="new-count__row">
               <label className="field">

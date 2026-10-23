@@ -23,6 +23,7 @@ export const IMAGE = { width: 1000, height: 800 } as const;
 export function newCount(): Count {
   return Count.create({
     id: COUNT_ID,
+    farm: 'Guaicaramo',
     pastureId: 'POTRERO-01',
     species: 'bufala',
     flightDate: new Date('2026-09-20T07:00:00Z'),

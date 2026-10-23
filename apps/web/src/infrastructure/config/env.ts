@@ -22,6 +22,14 @@ const EnvSchema = z.object({
   AIRTABLE_API_TOKEN: z.string().min(1),
   AIRTABLE_BASE_ID: z.string().regex(/^app[A-Za-z0-9]{14}$/),
   AIRTABLE_USUARIOS_TABLE_ID: z.string().regex(/^tbl[A-Za-z0-9]{14}$/),
+  /** Tabla Conteos. Vacía: los conteos se guardan en el archivo JSON local (desarrollo). */
+  AIRTABLE_CONTEOS_TABLE_ID: z.preprocess(
+    (value) => (value === '' ? undefined : value),
+    z
+      .string()
+      .regex(/^tbl[A-Za-z0-9]{14}$/)
+      .optional(),
+  ),
 });
 
 export type Env = z.infer<typeof EnvSchema>;

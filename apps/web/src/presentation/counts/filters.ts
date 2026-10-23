@@ -70,8 +70,8 @@ export function normalizeSearch(text: string): string {
 export function matchesSearch(count: CountSummaryView, query: string): boolean {
   const needle = normalizeSearch(query);
   if (needle === '') return true;
-  return (
-    normalizeSearch(count.id).includes(needle) || normalizeSearch(count.pastureId).includes(needle)
+  return [count.id, count.farm, count.pastureId].some((text) =>
+    normalizeSearch(text).includes(needle),
   );
 }
 

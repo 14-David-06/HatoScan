@@ -34,6 +34,8 @@ export interface HumanReview {
 
 export interface CountProps {
   readonly id: CountId;
+  /** Finca del conteo, en texto libre. Vacía solo en conteos anteriores a este campo. */
+  readonly farm: string;
   /** FK simbólica al potrero (fuente pendiente, ver D3). */
   readonly pastureId: string;
   readonly species: Species;
@@ -58,6 +60,7 @@ export class Count {
   private constructor(private readonly props: CountProps) {}
 
   static create(input: NewCount): Count {
+    if (input.farm.trim() === '') throw new InvalidValueError('farm is required');
     if (input.pastureId.trim() === '') throw new InvalidValueError('pastureId is required');
     if (input.originalImageKey.trim() === '') {
       throw new InvalidValueError('originalImageKey is required');
@@ -72,6 +75,10 @@ export class Count {
 
   get id(): CountId {
     return this.props.id;
+  }
+
+  get farm(): string {
+    return this.props.farm;
   }
 
   get pastureId(): string {

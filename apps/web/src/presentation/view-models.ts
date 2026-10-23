@@ -31,6 +31,8 @@ export type DetectionMethodsView = DetectionMethodCatalog | null;
 /** Fila de la lista de conteos. Solo datos serializables. */
 export interface CountSummaryView {
   readonly id: string;
+  /** Vacía en conteos anteriores al campo Finca. */
+  readonly farm: string;
   readonly pastureId: string;
   readonly species: Species;
   /** `AAAA-MM-DD` */
@@ -56,6 +58,7 @@ export interface CountDetailView extends CountSummaryView {
 export function toCountSummary(count: Count): CountSummaryView {
   return {
     id: count.id,
+    farm: count.farm,
     pastureId: count.pastureId,
     species: count.species,
     flightDate: count.flightDate.toISOString().slice(0, 10),

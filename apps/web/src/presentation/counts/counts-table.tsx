@@ -28,7 +28,7 @@ export function CountsTableHead() {
           Conteo
         </th>
         <th scope="col" className="counts-cell--pasture">
-          Potrero
+          Potrero y finca
         </th>
         <th scope="col" className="counts-cell--species">
           Especie
@@ -70,12 +70,16 @@ function CountRow({ count }: { count: CountSummaryView }) {
         <Link href={`/conteos/${count.id}`} className="counts-row__link">
           <CountId id={count.id} />
           <span className="visually-hidden">
-            , {count.pastureId}, {STATUS_LABELS[count.status]}
+            , {count.pastureId}
+            {count.farm && `, ${count.farm}`}, {STATUS_LABELS[count.status]}
           </span>
           <ChevronRightIcon size={18} className="counts-row__chevron" />
         </Link>
       </td>
-      <td className="counts-cell--pasture">{count.pastureId}</td>
+      <td className="counts-cell--pasture">
+        {count.pastureId}
+        {count.farm && <span className="counts-farm">{count.farm}</span>}
+      </td>
       <td className="counts-cell--species">{SPECIES_LABELS[count.species]}</td>
       <td className="counts-cell--date">
         <time dateTime={count.flightDate}>{formatDate(count.flightDate)}</time>

@@ -79,8 +79,8 @@ export function CountsInventory({ counts }: { counts: readonly CountSummaryView[
               ref={searchRef}
               type="search"
               className="input counts-search__input"
-              placeholder="Buscar potrero o ID"
-              aria-label="Buscar por potrero o ID"
+              placeholder="Buscar finca, potrero o ID"
+              aria-label="Buscar por finca, potrero o ID"
               autoComplete="off"
               spellCheck={false}
               value={query}

@@ -4,6 +4,7 @@ import { FakeStorage, fixedClock, InMemoryCounts, SequentialIds } from '../../..
 import { RegisterCount, type RegisterCountInput } from './register-count';
 
 const INPUT: RegisterCountInput = {
+  farm: ' Guaicaramo ',
   pastureId: ' POTRERO-07 ',
   species: 'bufala',
   flightDate: new Date('2026-09-30T07:00:00Z'),
@@ -31,6 +32,7 @@ describe('RegisterCount', () => {
 
     expect(count.id).toBe('SIRIUS-CONTEO-0042');
     expect(count.status).toBe('subido');
+    expect(count.farm).toBe('Guaicaramo');
     expect(count.pastureId).toBe('POTRERO-07');
     expect(count.uploadedAt.toISOString()).toBe('2026-10-01T15:00:00.000Z');
     expect(count.originalImageKey).toBe('counts/SIRIUS-CONTEO-0042/original.jpg');
@@ -47,6 +49,12 @@ describe('RegisterCount', () => {
     ).rejects.toThrow(InvalidValueError);
     expect(storage.puts).toHaveLength(0);
     expect(counts.saved).toHaveLength(0);
+  });
+
+  it('rejects a missing farm without storing the image', async () => {
+    const { storage, useCase } = setup();
+    await expect(useCase.execute({ ...INPUT, farm: ' ' })).rejects.toThrow(InvalidValueError);
+    expect(storage.puts).toHaveLength(0);
   });
 
   it('rejects a missing pasture without storing the image', async () => {

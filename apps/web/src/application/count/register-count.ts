@@ -26,6 +26,7 @@ export interface RegisterCountDeps {
 }
 
 export interface RegisterCountInput {
+  readonly farm: string;
   readonly pastureId: string;
   readonly species: Species;
   readonly flightDate: Date;
@@ -53,6 +54,7 @@ export class RegisterCount {
     // Validar el conteo antes de escribir el binario.
     const count = Count.create({
       id,
+      farm: input.farm.trim(),
       pastureId: input.pastureId.trim(),
       species: input.species,
       flightDate: input.flightDate,

@@ -39,6 +39,7 @@ export function CountHeader({ count }: { count: CountDetailView }) {
 
       <div className="count-header__facts">
         <dl className="facts count-facts">
+          {count.farm && <Fact label="Finca">{count.farm}</Fact>}
           <Fact label="Potrero">{count.pastureId}</Fact>
           <Fact label="Especie">{SPECIES_LABELS[count.species]}</Fact>
           <Fact label="Fecha de vuelo">{formatDate(count.flightDate)}</Fact>
