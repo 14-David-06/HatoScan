@@ -1,7 +1,7 @@
 [project]
 name = "hatoscan-detector"
 version = "0.1.0"
-description = "Servicio de detección de ganado en fotos aéreas (FastAPI, Cloud Run)."
+description = "Servicio de detección de ganado en fotos aéreas (FastAPI en Vercel Functions)."
 requires-python = ">=3.11"
 dependencies = [
     "anthropic>=2.0.0",

@@ -19,7 +19,7 @@ RUN python -c "import hashlib, os, sys, urllib.request; os.makedirs('models', ex
 RUN useradd --system --uid 10001 detector
 USER detector
 
-# Cloud Run inyecta PORT.
+# Para correrlo en contenedor (en producción se despliega en Vercel, ADR 0006). PORT se puede inyectar.
 ENV PORT=8080
 EXPOSE 8080
 CMD ["sh", "-c", "exec /srv/.venv/bin/uvicorn app.main:app --host 0.0.0.0 --port ${PORT}"]

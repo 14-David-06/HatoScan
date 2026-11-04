@@ -1,7 +1,8 @@
 # Servicio de detección
 
-FastAPI en Cloud Run. Recibe una URL firmada de la imagen original, ejecuta un detector y
-devuelve un `CountResult` (ver `packages/contracts`). La inferencia nunca corre en Vercel.
+FastAPI, desplegado como proyecto aparte de Vercel (ADR 0006, `docs/despliegue.md`). Recibe una URL
+firmada de la imagen original en S3, ejecuta un detector y devuelve un `CountResult` (ver
+`packages/contracts`). La web nunca ejecuta detección.
 
 ## Desarrollo
 

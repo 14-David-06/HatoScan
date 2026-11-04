@@ -11,8 +11,9 @@ class Settings(BaseSettings):
     # Token compartido que la web manda en `Authorization: Bearer`. Sin él, ``/v1/*`` responde 503:
     # el servicio no se expone nunca sin autenticación.
     api_token: SecretStr | None = None
-    # Hosts de los que se aceptan URLs de imagen, en JSON (ej. ["hatoscan.vercel.app"]). Vacío =
-    # ninguno: el detector solo descarga de la app, nunca de direcciones arbitrarias (SSRF).
+    # Hosts de los que se aceptan URLs de imagen, en JSON (en producción, el bucket S3:
+    # ["<bucket>.s3.<región>.amazonaws.com"]). Vacío = ninguno: nunca descarga de direcciones
+    # arbitrarias (SSRF).
     allowed_image_hosts: list[str] = []
 
     # Fotos de dron de 10-30 MB; margen para mosaicos.
