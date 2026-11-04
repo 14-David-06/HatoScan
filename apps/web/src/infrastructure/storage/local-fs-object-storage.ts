@@ -1,7 +1,7 @@
 import { createHmac, timingSafeEqual } from 'node:crypto';
-import { mkdir, readFile, rename, writeFile } from 'node:fs/promises';
+import { copyFile, mkdir, readFile, rename, rm, stat, writeFile } from 'node:fs/promises';
 import { dirname, join, resolve, sep } from 'node:path';
-import type { ObjectStorage } from '@/domain/index';
+import type { ObjectInfo, ObjectStorage, UploadTarget } from '@/domain/index';
 
 const CONTENT_TYPES: Readonly<Record<string, string>> = {
   jpg: 'image/jpeg',
@@ -24,15 +24,18 @@ export interface LocalFsObjectStorageOptions {
   readonly now?: () => Date;
 }
 
-export interface SignedRead {
+export interface SignedRequest {
   readonly key: string;
   readonly expires: string | null;
   readonly signature: string | null;
 }
 
+/** Una URL de lectura no sirve para escribir, ni al revés. */
+type Purpose = 'read' | 'write';
+
 /**
- * Almacenamiento en disco para desarrollo local, mientras se decide D1 (Pinata privado o GCS).
- * Las URLs de lectura caducan y van firmadas, como lo harán las del proveedor definitivo.
+ * Almacenamiento en disco para desarrollo local (en producción, S3; ver ADR 0006). Las URLs de
+ * lectura y de subida caducan y van firmadas, como las de S3, y las sirve `/api/files`.
  */
 export class LocalFsObjectStorage implements ObjectStorage {
   private readonly rootDir: string;
@@ -57,39 +60,82 @@ export class LocalFsObjectStorage implements ObjectStorage {
   }
 
   getReadUrl(key: string, ttlSeconds: number): Promise<string> {
-    this.pathFor(key);
-    const expires = Math.floor(this.now().getTime() / 1000) + ttlSeconds;
-    const url = new URL(`${this.options.publicBaseUrl}/api/files/${key}`);
-    url.searchParams.set('expires', String(expires));
-    url.searchParams.set('signature', this.sign(key, expires));
-    return Promise.resolve(url.toString());
+    return Promise.resolve(this.signedUrl('read', key, ttlSeconds));
+  }
+
+  getUploadUrl(key: string, contentType: string, ttlSeconds: number): Promise<UploadTarget> {
+    return Promise.resolve({
+      url: this.signedUrl('write', key, ttlSeconds),
+      method: 'PUT',
+      headers: { 'content-type': contentType },
+    });
+  }
+
+  async stat(key: string): Promise<ObjectInfo | undefined> {
+    try {
+      const info = await stat(this.pathFor(key));
+      return { size: info.size, contentType: contentTypeOf(key) };
+    } catch (error) {
+      if (isNotFound(error)) return undefined;
+      throw error;
+    }
+  }
+
+  async copy(fromKey: string, toKey: string): Promise<void> {
+    const to = this.pathFor(toKey);
+    await mkdir(dirname(to), { recursive: true });
+    await copyFile(this.pathFor(fromKey), to);
+  }
+
+  async delete(key: string): Promise<void> {
+    await rm(this.pathFor(key), { force: true });
   }
 
   /** Devuelve el objeto si la firma es válida y no ha caducado; si no, `undefined`. */
   async readSigned(
-    request: SignedRead,
+    request: SignedRequest,
   ): Promise<{ body: Uint8Array; contentType: string } | undefined> {
-    const { key, expires, signature } = request;
-    if (!KEY_PATTERN.test(key) || expires === null || signature === null) return undefined;
-    const expiresAt = Number(expires);
-    if (!Number.isInteger(expiresAt) || expiresAt * 1000 < this.now().getTime()) return undefined;
-
-    const expected = Buffer.from(this.sign(key, expiresAt), 'hex');
-    const received = Buffer.from(signature, 'hex');
-    if (expected.length !== received.length || !timingSafeEqual(expected, received)) {
-      return undefined;
-    }
-
+    if (!this.verify('read', request)) return undefined;
     try {
-      return { body: await this.get(key), contentType: contentTypeOf(key) };
+      return { body: await this.get(request.key), contentType: contentTypeOf(request.key) };
     } catch {
       return undefined;
     }
   }
 
-  private sign(key: string, expires: number): string {
+  /** Guarda el cuerpo si la URL de subida es válida y el tipo coincide con la clave. */
+  async writeSigned(
+    request: SignedRequest & { readonly body: Uint8Array; readonly contentType: string },
+  ): Promise<boolean> {
+    if (!this.verify('write', request) || request.contentType !== contentTypeOf(request.key)) {
+      return false;
+    }
+    await this.put(request.key, request.body);
+    return true;
+  }
+
+  private signedUrl(purpose: Purpose, key: string, ttlSeconds: number): string {
+    this.pathFor(key);
+    const expires = Math.floor(this.now().getTime() / 1000) + ttlSeconds;
+    const url = new URL(`${this.options.publicBaseUrl}/api/files/${key}`);
+    url.searchParams.set('expires', String(expires));
+    url.searchParams.set('signature', this.sign(purpose, key, expires));
+    return url.toString();
+  }
+
+  private verify(purpose: Purpose, { key, expires, signature }: SignedRequest): boolean {
+    if (!KEY_PATTERN.test(key) || expires === null || signature === null) return false;
+    const expiresAt = Number(expires);
+    if (!Number.isInteger(expiresAt) || expiresAt * 1000 < this.now().getTime()) return false;
+
+    const expected = Buffer.from(this.sign(purpose, key, expiresAt), 'hex');
+    const received = Buffer.from(signature, 'hex');
+    return expected.length === received.length && timingSafeEqual(expected, received);
+  }
+
+  private sign(purpose: Purpose, key: string, expires: number): string {
     return createHmac('sha256', this.options.signingSecret)
-      .update(`${key}\n${expires}`)
+      .update(`${purpose}\n${key}\n${expires}`)
       .digest('hex');
   }
 
@@ -101,6 +147,10 @@ export class LocalFsObjectStorage implements ObjectStorage {
     if (!path.startsWith(this.rootDir + sep)) throw new Error(`Invalid object key: ${key}`);
     return path;
   }
+}
+
+function isNotFound(error: unknown): boolean {
+  return error instanceof Error && 'code' in error && error.code === 'ENOENT';
 }
 
 function contentTypeOf(key: string): string {

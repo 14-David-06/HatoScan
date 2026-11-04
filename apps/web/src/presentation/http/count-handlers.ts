@@ -1,6 +1,7 @@
 import { DetectionSchema, type Detection as DetectionContract } from '@hatoscan/contracts';
 import { z } from 'zod';
 import { ApplicationError, CountNotFoundError } from '@/application/errors';
+import type { CreateImageUpload } from '@/application/count/create-image-upload';
 import type { ProcessCount } from '@/application/count/process-count';
 import type { RegisterCount } from '@/application/count/register-count';
 import type { ReviewCount } from '@/application/count/review-count';
@@ -9,7 +10,13 @@ import { DomainError, SPECIES, toCountId, type Detection, type PersonId } from '
 const optionalNumber = (schema: z.ZodNumber) =>
   z.preprocess((value) => (value === '' || value === null ? undefined : value), schema.optional());
 
-const NewCountFormSchema = z.object({
+const UploadBodySchema = z.object({
+  contentType: z.string().min(1),
+  size: z.number().int(),
+});
+
+const NewCountBodySchema = z.object({
+  uploadKey: z.string().min(1, 'Adjunta la foto aérea original.'),
   farm: z.string().trim().min(1, 'La finca es obligatoria').max(100),
   pastureId: z.string().trim().min(1, 'El potrero es obligatorio'),
   species: z.enum(SPECIES),
@@ -30,24 +37,24 @@ const ReviewBodySchema = z.object({
   detections: z.array(DetectionSchema),
 });
 
-/** `POST /api/counts` (multipart): registra un conteo con su imagen original. */
+/**
+ * `POST /api/counts/uploads` (JSON `{ contentType, size }`): URL firmada para que el navegador suba
+ * la foto original directo al almacenamiento, sin pasar por la app.
+ */
+export function createUploadHandler(createImageUpload: CreateImageUpload) {
+  return (request: Request): Promise<Response> =>
+    respond(async () => {
+      const body = UploadBodySchema.parse(await request.json());
+      const upload = await createImageUpload.execute(body);
+      return Response.json(upload, { status: 201 });
+    });
+}
+
+/** `POST /api/counts` (JSON): registra un conteo con la foto ya subida (`uploadKey`). */
 export function createCountHandler(registerCount: RegisterCount) {
   return (request: Request): Promise<Response> =>
     respond(async () => {
-      const form = await request.formData();
-      const image = form.get('image');
-      if (!(image instanceof File) || image.size === 0) {
-        return problem(400, 'Adjunta la foto aérea original.');
-      }
-      const fields = NewCountFormSchema.parse({
-        farm: form.get('farm'),
-        pastureId: form.get('pastureId'),
-        species: form.get('species'),
-        flightDate: form.get('flightDate'),
-        altitudeM: form.get('altitudeM'),
-        cameraAngleDeg: form.get('cameraAngleDeg'),
-        notes: form.get('notes') ?? undefined,
-      });
+      const fields = NewCountBodySchema.parse(await request.json());
 
       const count = await registerCount.execute({
         farm: fields.farm,
@@ -60,7 +67,7 @@ export function createCountHandler(registerCount: RegisterCount) {
           ...(fields.cameraAngleDeg !== undefined && { cameraAngleDeg: fields.cameraAngleDeg }),
           ...(fields.notes && { notes: fields.notes }),
         },
-        image: { bytes: new Uint8Array(await image.arrayBuffer()), contentType: image.type },
+        uploadKey: fields.uploadKey,
       });
       return Response.json({ id: count.id, status: count.status }, { status: 201 });
     });

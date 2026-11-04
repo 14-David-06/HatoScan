@@ -43,11 +43,35 @@ export interface Detector {
   methods(): Promise<DetectionMethodCatalog>;
 }
 
-/** Puerto del almacenamiento de binarios (decisión D1 pendiente: Pinata privado o GCS). */
+/** Lo que el almacenamiento sabe de un objeto guardado. */
+export interface ObjectInfo {
+  readonly size: number;
+  readonly contentType: string;
+}
+
+/** Petición que el navegador hace para subir un archivo directo al almacenamiento. */
+export interface UploadTarget {
+  readonly url: string;
+  readonly method: 'PUT';
+  /** Cabeceras que la petición debe llevar tal cual (van firmadas). */
+  readonly headers: Readonly<Record<string, string>>;
+}
+
+/** Puerto del almacenamiento de binarios (D1: bucket S3 privado; ver ADR 0006). */
 export interface ObjectStorage {
   put(key: string, body: Uint8Array, contentType: string): Promise<void>;
   get(key: string): Promise<Uint8Array>;
   getReadUrl(key: string, ttlSeconds: number): Promise<string>;
+  /**
+   * URL temporal para subir un objeto sin pasar por la app: las fotos de 10–30 MB superan el
+   * límite de cuerpo de las funciones serverless.
+   */
+  getUploadUrl(key: string, contentType: string, ttlSeconds: number): Promise<UploadTarget>;
+  /** `undefined` si el objeto no existe. */
+  stat(key: string): Promise<ObjectInfo | undefined>;
+  copy(fromKey: string, toKey: string): Promise<void>;
+  /** No falla si el objeto ya no existe. */
+  delete(key: string): Promise<void>;
 }
 
 export interface ReviewRecord {

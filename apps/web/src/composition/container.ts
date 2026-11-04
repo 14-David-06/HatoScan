@@ -1,6 +1,7 @@
 import 'server-only';
 import { resolve } from 'node:path';
 import { AuthenticateUser } from '@/application/auth/authenticate-user';
+import { CreateImageUpload } from '@/application/count/create-image-upload';
 import { GetCountDetail } from '@/application/count/get-count-detail';
 import { ListDetectionMethods } from '@/application/count/list-detection-methods';
 import { ListCounts } from '@/application/count/list-counts';
@@ -8,41 +9,29 @@ import { ListFarms } from '@/application/count/list-farms';
 import { ProcessCount } from '@/application/count/process-count';
 import { RegisterCount } from '@/application/count/register-count';
 import { ReviewCount } from '@/application/count/review-count';
-import type { Clock, User } from '@/domain/index';
+import type { Clock, CountIdGenerator, CountRepository, ObjectStorage, User } from '@/domain/index';
 import { AirtableCountRepository } from '@/infrastructure/airtable/airtable-count-repository';
 import { AirtableUserDirectory } from '@/infrastructure/airtable/airtable-user-directory';
 import { LoginRateLimiter } from '@/infrastructure/auth/login-rate-limiter';
 import { ScryptPasswordHasher } from '@/infrastructure/auth/scrypt-password-hasher';
 import { signSession, verifySession } from '@/infrastructure/auth/session-token';
-import { getEnv } from '@/infrastructure/config/env';
+import { getEnv, type Env } from '@/infrastructure/config/env';
 import { JsonFileCountRepository } from '@/infrastructure/counts/json-file-count-repository';
 import { HttpDetector } from '@/infrastructure/detector/http-detector';
 import { ObjectStorageResultStore } from '@/infrastructure/results/object-storage-result-store';
 import { LocalFsObjectStorage } from '@/infrastructure/storage/local-fs-object-storage';
+import { S3ObjectStorage } from '@/infrastructure/storage/s3-object-storage';
 
 /**
  * Raíz de composición: único lugar donde se eligen los adaptadores concretos.
- * Conteos y usuarios en Airtable (D2); imágenes y JSON aún en el almacenamiento local (ADR 0004)
- * hasta cerrar D1. Cambiar un adaptador no toca domain, application ni presentation.
+ * Conteos y usuarios en Airtable (D2). Imágenes y JSON en un bucket S3 privado en producción (D1,
+ * ADR 0006) o en disco en desarrollo (ADR 0004). Cambiar un adaptador no toca domain, application
+ * ni presentation.
  */
 function createContainer() {
   const env = getEnv();
-  const dataDir = resolve(env.LOCAL_DATA_DIR);
-
   const clock: Clock = { now: () => new Date() };
-  const storage = new LocalFsObjectStorage({
-    rootDir: resolve(dataDir, 'objects'),
-    publicBaseUrl: env.APP_BASE_URL,
-    signingSecret: env.LOCAL_STORAGE_SIGNING_SECRET,
-  });
-  // Registro de conteos: Airtable (D2) si la tabla está configurada; si no, archivo JSON local.
-  const counts = env.AIRTABLE_CONTEOS_TABLE_ID
-    ? new AirtableCountRepository({
-        apiToken: env.AIRTABLE_API_TOKEN,
-        baseId: env.AIRTABLE_BASE_ID,
-        tableId: env.AIRTABLE_CONTEOS_TABLE_ID,
-      })
-    : new JsonFileCountRepository(resolve(dataDir, 'counts.json'));
+  const { storage, localFiles, counts } = createStores(env);
   const results = new ObjectStorageResultStore(storage);
   const detector = new HttpDetector({
     baseUrl: env.DETECTOR_BASE_URL,
@@ -57,7 +46,9 @@ function createContainer() {
   });
 
   return {
-    localFiles: storage,
+    /** Solo en desarrollo: `/api/files` sirve y recibe los archivos del disco. */
+    localFiles,
+    createImageUpload: new CreateImageUpload({ storage, ttlSeconds: env.UPLOAD_URL_TTL_SECONDS }),
     registerCount: new RegisterCount({ counts, ids: counts, storage, clock }),
     listCounts: new ListCounts(counts),
     listFarms: new ListFarms(counts),
@@ -72,6 +63,45 @@ function createContainer() {
       verify: (token: string | undefined) => verifySession(token, env.AUTH_SESSION_SECRET),
     },
   };
+}
+
+function createStores(env: Env): {
+  storage: ObjectStorage;
+  localFiles: LocalFsObjectStorage | undefined;
+  counts: CountRepository & CountIdGenerator;
+} {
+  const airtableCounts = (tableId: string) =>
+    new AirtableCountRepository({
+      apiToken: env.AIRTABLE_API_TOKEN,
+      baseId: env.AIRTABLE_BASE_ID,
+      tableId,
+    });
+
+  if (env.STORAGE_DRIVER === 's3') {
+    const storage = new S3ObjectStorage({
+      bucket: env.S3_BUCKET,
+      region: env.S3_REGION,
+      accessKeyId: env.S3_ACCESS_KEY_ID,
+      secretAccessKey: env.S3_SECRET_ACCESS_KEY,
+    });
+    return {
+      storage,
+      localFiles: undefined,
+      counts: airtableCounts(env.AIRTABLE_CONTEOS_TABLE_ID),
+    };
+  }
+
+  const dataDir = resolve(env.LOCAL_DATA_DIR);
+  const storage = new LocalFsObjectStorage({
+    rootDir: resolve(dataDir, 'objects'),
+    publicBaseUrl: env.APP_BASE_URL,
+    signingSecret: env.LOCAL_STORAGE_SIGNING_SECRET,
+  });
+  // Registro de conteos: Airtable si la tabla está configurada; si no, archivo JSON local.
+  const counts = env.AIRTABLE_CONTEOS_TABLE_ID
+    ? airtableCounts(env.AIRTABLE_CONTEOS_TABLE_ID)
+    : new JsonFileCountRepository(resolve(dataDir, 'counts.json'));
+  return { storage, localFiles: storage, counts };
 }
 
 export type Container = ReturnType<typeof createContainer>;

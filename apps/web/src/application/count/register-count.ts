@@ -8,15 +8,7 @@ import {
   type ObjectStorage,
   type Species,
 } from '@/domain/index';
-
-/** Formatos aceptados para la imagen original. Se guarda tal cual: nunca se reescala. */
-const IMAGE_EXTENSIONS: Readonly<Record<string, string>> = {
-  'image/jpeg': 'jpg',
-  'image/png': 'png',
-  'image/tiff': 'tif',
-};
-
-export const ACCEPTED_IMAGE_TYPES = Object.keys(IMAGE_EXTENSIONS);
+import { assertImageSize, IMAGE_EXTENSIONS, isUploadKey } from './create-image-upload';
 
 export interface RegisterCountDeps {
   readonly counts: CountRepository;
@@ -31,27 +23,42 @@ export interface RegisterCountInput {
   readonly species: Species;
   readonly flightDate: Date;
   readonly flight: FlightMetadata;
-  readonly image: { readonly bytes: Uint8Array; readonly contentType: string };
+  /** Clave que devolvió `CreateImageUpload`; el navegador ya subió la foto ahí. */
+  readonly uploadKey: string;
 }
 
-/** Registra un conteo nuevo: guarda la imagen original y deja el conteo en `subido`. */
+/**
+ * Registra un conteo nuevo con la foto que el navegador subió directo al almacenamiento: la mueve a
+ * `counts/{id}/original.{ext}` sin tocar sus bytes y deja el conteo en `subido`.
+ */
 export class RegisterCount {
   constructor(private readonly deps: RegisterCountDeps) {}
 
   async execute(input: RegisterCountInput): Promise<Count> {
     const { counts, ids, storage, clock } = this.deps;
 
-    const extension = IMAGE_EXTENSIONS[input.image.contentType];
-    if (!extension) {
-      throw new InvalidValueError(`Unsupported image type: ${input.image.contentType}`);
+    if (!isUploadKey(input.uploadKey)) {
+      throw new InvalidValueError(`Invalid upload key: ${input.uploadKey}`);
     }
-    if (input.image.bytes.byteLength === 0) throw new InvalidValueError('Image is empty');
     if (Number.isNaN(input.flightDate.getTime()))
       throw new InvalidValueError('Invalid flight date');
 
+    const uploaded = await storage.stat(input.uploadKey);
+    if (!uploaded) throw new InvalidValueError('The image was not uploaded');
+    const extension = IMAGE_EXTENSIONS[uploaded.contentType];
+    if (!extension || !input.uploadKey.endsWith(`.${extension}`)) {
+      throw new InvalidValueError(`Unsupported image type: ${uploaded.contentType}`);
+    }
+    try {
+      assertImageSize(uploaded.size);
+    } catch (error) {
+      await storage.delete(input.uploadKey);
+      throw error;
+    }
+
     const id = await ids.next();
     const originalImageKey = `counts/${id}/original.${extension}`;
-    // Validar el conteo antes de escribir el binario.
+    // Validar el conteo antes de mover el binario.
     const count = Count.create({
       id,
       farm: input.farm.trim(),
@@ -63,8 +70,10 @@ export class RegisterCount {
       originalImageKey,
     });
 
-    await storage.put(originalImageKey, input.image.bytes, input.image.contentType);
+    await storage.copy(input.uploadKey, originalImageKey);
     await counts.save(count);
+    // Si falla, la regla de ciclo de vida del bucket borra la subida en 24 h.
+    await storage.delete(input.uploadKey).catch(() => undefined);
     return count;
   }
 }

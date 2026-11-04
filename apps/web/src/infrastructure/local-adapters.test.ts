@@ -64,6 +64,34 @@ describe('LocalFsObjectStorage', () => {
     );
     await expect(storage().get('a/../../evil.jpg')).rejects.toThrow(/Invalid object key/);
   });
+
+  it('accepts a signed upload only with its own url and the type of the key', async () => {
+    const target = await storage().getUploadUrl('uploads/u.jpg', 'image/jpeg', 60);
+    const signed = signedFrom(target.url);
+    const body = new Uint8Array([9, 8, 7]);
+
+    // Una URL de lectura no sirve para escribir.
+    const readUrl = signedFrom(await storage().getReadUrl('uploads/u.jpg', 60));
+    expect(await storage().writeSigned({ ...readUrl, body, contentType: 'image/jpeg' })).toBe(
+      false,
+    );
+    expect(await storage().writeSigned({ ...signed, body, contentType: 'image/png' })).toBe(false);
+    expect(await storage().writeSigned({ ...signed, body, contentType: 'image/jpeg' })).toBe(true);
+
+    expect(await storage().stat('uploads/u.jpg')).toEqual({ size: 3, contentType: 'image/jpeg' });
+    // Y una de subida no sirve para leer.
+    expect(await storage().readSigned(signed)).toBeUndefined();
+  });
+
+  it('copies, deletes and reports missing objects', async () => {
+    await storage().put('uploads/u.png', new Uint8Array([1, 2]));
+    await storage().copy('uploads/u.png', 'counts/SIRIUS-CONTEO-0001/original.png');
+    await storage().delete('uploads/u.png');
+    await storage().delete('uploads/u.png');
+
+    expect(await storage().stat('uploads/u.png')).toBeUndefined();
+    expect([...(await storage().get('counts/SIRIUS-CONTEO-0001/original.png'))]).toEqual([1, 2]);
+  });
 });
 
 describe('JsonFileCountRepository', () => {

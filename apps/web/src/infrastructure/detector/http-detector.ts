@@ -19,12 +19,12 @@ export class DetectorServiceError extends Error {
 export interface HttpDetectorOptions {
   readonly baseUrl: string;
   readonly timeoutMs: number;
-  /** Token para `Authorization: Bearer`: hoy el secreto compartido; en Cloud Run podrá ser IAM. */
+  /** Token para `Authorization: Bearer`: el secreto compartido con el detector. */
   readonly getAuthToken?: () => Promise<string>;
   readonly fetch?: typeof fetch;
 }
 
-/** Cliente HTTP del servicio de detección (FastAPI en Cloud Run). */
+/** Cliente HTTP del servicio de detección (FastAPI, proyecto Vercel aparte; ADR 0006). */
 export class HttpDetector implements Detector {
   constructor(private readonly options: HttpDetectorOptions) {}
 

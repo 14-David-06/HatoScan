@@ -8,7 +8,15 @@ import { useElapsedSince } from '../detection/elapsed';
 import { MethodSelect, methodLabel, useMethod } from '../detection/method-select';
 import { AlertTriangleIcon, ChevronDownIcon, UploadIcon } from '../ui/icons';
 import { PhotoDropzone } from '../upload/photo-dropzone';
-import { postFormWithProgress, readReply, type TransferProgress } from '../upload/post-form';
+import { imageTypeOf } from '../upload/photo-file';
+import {
+  postJson,
+  readReply,
+  readUploadTarget,
+  uploadWithProgress,
+  type JsonReply,
+  type TransferProgress,
+} from '../upload/post-form';
 import { UploadSteps, type UploadStep } from '../upload/upload-steps';
 import { SPECIES_LABELS, type DetectionMethodsView } from '../view-models';
 
@@ -105,11 +113,36 @@ export function NewCountScreen({
 
     let id: string;
     try {
-      const reply = await postFormWithProgress('/api/counts', form, setUpload);
-      const body = readReply(reply.body);
-      if (!reply.ok || !body.id) {
-        throw new Error(body.error ?? `El servidor respondió con el error ${reply.status}.`);
+      const image = form.get('image');
+      form.delete('image');
+      const type = image instanceof File ? imageTypeOf(image) : null;
+      if (!(image instanceof File) || image.size === 0 || type === null) {
+        throw new Error('Adjunta la foto aérea original (JPG, PNG o TIFF).');
       }
+
+      // 1. URL firmada; 2. la foto va directo al almacenamiento; 3. se registra el conteo.
+      const prepared = await postJson('/api/counts/uploads', {
+        contentType: type,
+        size: image.size,
+      });
+      const target = readUploadTarget(prepared.body);
+      if (!prepared.ok || !target) throw new Error(serverError(prepared));
+
+      const uploaded = await uploadWithProgress(target, image, setUpload);
+      if (!uploaded.ok) {
+        throw new Error(
+          `El almacenamiento rechazó la foto (error ${uploaded.status}). Vuelve a intentarlo.`,
+        );
+      }
+
+      const fields = Object.fromEntries(
+        [...form.entries()].filter(
+          (entry): entry is [string, string] => typeof entry[1] === 'string',
+        ),
+      );
+      const reply = await postJson('/api/counts', { ...fields, uploadKey: target.uploadKey });
+      const body = readReply(reply.body);
+      if (!reply.ok || !body.id) throw new Error(serverError(reply));
       id = body.id;
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'No se pudo subir la foto.');
@@ -339,6 +372,10 @@ export function NewCountScreen({
       </form>
     </main>
   );
+}
+
+function serverError(reply: JsonReply): string {
+  return readReply(reply.body).error ?? `El servidor respondió con el error ${reply.status}.`;
 }
 
 /**

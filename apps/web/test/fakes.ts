@@ -12,8 +12,10 @@ import {
   type DetectionOutput,
   type DetectionResultStore,
   type Detector,
+  type ObjectInfo,
   type ObjectStorage,
   type ReviewRecord,
+  type UploadTarget,
 } from '@/domain/index';
 
 export const COUNT_ID = toCountId('SIRIUS-CONTEO-0001');
@@ -111,9 +113,14 @@ export const detectorReturning = (detections: Detection[]): FakeDetector =>
 
 export class FakeStorage implements ObjectStorage {
   readonly puts: { key: string; contentType: string; size: number }[] = [];
+  readonly copies: { from: string; to: string }[] = [];
+  readonly deletes: string[] = [];
+  /** Objetos que existen sin haber pasado por `put` (ej. subidos por el navegador). */
+  readonly objects = new Map<string, ObjectInfo>();
 
   put(key: string, body: Uint8Array, contentType: string): Promise<void> {
     this.puts.push({ key, contentType, size: body.byteLength });
+    this.objects.set(key, { size: body.byteLength, contentType });
     return Promise.resolve();
   }
   get(): Promise<Uint8Array> {
@@ -121,6 +128,28 @@ export class FakeStorage implements ObjectStorage {
   }
   getReadUrl(key: string): Promise<string> {
     return Promise.resolve(`https://storage.test/${key}?signed`);
+  }
+  getUploadUrl(key: string, contentType: string): Promise<UploadTarget> {
+    return Promise.resolve({
+      url: `https://storage.test/${key}?upload`,
+      method: 'PUT',
+      headers: { 'content-type': contentType },
+    });
+  }
+  stat(key: string): Promise<ObjectInfo | undefined> {
+    return Promise.resolve(this.objects.get(key));
+  }
+  copy(from: string, to: string): Promise<void> {
+    const object = this.objects.get(from);
+    if (!object) return Promise.reject(new Error(`Object not found: ${from}`));
+    this.copies.push({ from, to });
+    this.objects.set(to, object);
+    return Promise.resolve();
+  }
+  delete(key: string): Promise<void> {
+    this.deletes.push(key);
+    this.objects.delete(key);
+    return Promise.resolve();
   }
 }
 
