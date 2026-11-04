@@ -24,11 +24,11 @@ Objetivo de negocio: conteos de inventario ganadero rápidos, auditables (quién
 | Frontend + API | Next.js (App Router) + TypeScript estricto, desplegado en Vercel |
 | Arquitectura | Clean Architecture (domain / application / infrastructure / presentation) |
 | Registro de datos | Airtable (arquitectura federada de Sirius Verse, FK simbólicas) |
-| Servicio de detección | Python 3.11+ con FastAPI, en contenedor Docker, desplegado en Google Cloud Run (cuenta de Sirius Regenerative, no personal) |
-| Almacenamiento de objetos | Ver decisión abierta D1 |
+| Servicio de detección | Python 3.12 con FastAPI, desplegado como proyecto aparte de Vercel (función Python, `services/detector/vercel.json`). El Dockerfile se conserva para correrlo en contenedor |
+| Almacenamiento de objetos | Bucket S3 privado en la cuenta de AWS de Sirius Regenerative (D1 cerrada, ADR 0006). AWS se usa **solo** para S3 |
 | Validación de contratos | Zod en TS, Pydantic en Python, ambos derivados del mismo JSON Schema |
 
-La inferencia **no** corre en funciones serverless de Vercel (tiempo de ejecución y falta de GPU). Vercel solo orquesta.
+La inferencia corre en el proyecto Vercel del detector, nunca en el de la web ni en sus route handlers (ADR 0006). Requiere Vercel Pro: hasta 800 s por función y solo CPU. Un modelo que necesite GPU tendrá que vivir fuera de Vercel; esa decisión se toma cuando exista. Despliegue paso a paso: `docs/despliegue.md`.
 
 ## 4. Estructura del repo (monorepo)
 
@@ -88,7 +88,7 @@ No crear registros que ya creen automatizaciones de Airtable. Antes de escribir 
 
 ## 8. Decisiones abiertas (no asumir; preguntar)
 
-- **D1 — Almacenamiento de imágenes.** La convención de Sirius Media es Pinata (IPFS); GeoMaps usa bucket privado. Las fotos aéreas de la finca son información sensible y pesada (10–30 MB c/u). Definir entre Pinata con archivos privados o un bucket privado (GCS en la misma cuenta que Cloud Run). Dejar el storage detrás de un puerto `ObjectStorage` para no amarrarse.
+- ~~**D1 — Almacenamiento de imágenes.**~~ Cerrada en el ADR 0006: bucket S3 privado detrás del puerto `ObjectStorage`, con subida directa desde el navegador mediante URL firmada.
 - **D2 — Base de Airtable.** ¿Base nueva de ganadería o tabla dentro de una base existente?
 - **D3 — Fuente de los potreros.** ¿Se leen de GeoMaps (con su polígono) o de un catálogo propio?
 - **D4 — Autenticación.** ¿Mismo esquema de auth que el resto de Sirius Verse?

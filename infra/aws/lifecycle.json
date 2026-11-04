@@ -1,0 +1,11 @@
+{
+  "Rules": [
+    {
+      "ID": "borrar-subidas-sin-conteo",
+      "Filter": { "Prefix": "uploads/" },
+      "Status": "Enabled",
+      "Expiration": { "Days": 1 },
+      "AbortIncompleteMultipartUpload": { "DaysAfterInitiation": 1 }
+    }
+  ]
+}

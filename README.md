@@ -9,7 +9,7 @@ Contexto completo, principios y decisiones abiertas: [`CLAUDE.md`](CLAUDE.md).
 
 ```
 apps/web            Next.js (App Router) — UI de revisión y orquestación. Clean Architecture.
-services/detector   FastAPI en Cloud Run — detección sobre la imagen a resolución completa.
+services/detector   FastAPI en Vercel (proyecto aparte) — detección sobre la imagen a resolución completa.
 packages/contracts  JSON Schema compartidos (fuente de verdad) + validadores Zod generados.
 docs/               ADRs y documentación.
 ```
@@ -45,9 +45,10 @@ Copia `apps/web/.env.example` → `apps/web/.env.local` (rellena `LOCAL_STORAGE_
    Si la propuesta es mala, **Volver a detectar con otro método** (solo antes de confirmar).
 4. **Confirmar conteo** guarda el JSON revisado; el total revisado pasa a ser el oficial.
 
-En local, imágenes, JSON y registro de conteos viven en `apps/web/.data/` (ver
-[ADR 0004](docs/adr/0004-raiz-de-composicion-y-adaptadores-locales.md)); Airtable y el storage
-definitivo esperan las decisiones D1/D2.
+En local (`STORAGE_DRIVER=local`), imágenes y JSON viven en `apps/web/.data/` (ver
+[ADR 0004](docs/adr/0004-raiz-de-composicion-y-adaptadores-locales.md)). En producción van a un
+bucket S3 privado; ver [ADR 0006](docs/adr/0006-despliegue-vercel-y-s3.md) y
+[`docs/despliegue.md`](docs/despliegue.md).
 
 ## Contratos
 
