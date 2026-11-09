@@ -30,14 +30,28 @@
   color: var(--ink);
 }
 
+/* La marca es un pedazo del visor: siempre oscura, como la ventana de la foto. */
 .brand__mark {
-  color: var(--ink);
+  flex: none;
 }
 
-/* El punto central de la retícula es una detección: usa el amarillo del modelo. */
-.brand__mark .brand__target {
-  fill: var(--mark-model);
-  stroke: var(--ink);
+.brand__tile {
+  fill: var(--viewport);
+  stroke: var(--viewport-line);
+  stroke-width: 1;
+}
+
+.brand__frame {
+  stroke: var(--hud-ink);
+}
+
+/* El anillo central es una detección: usa el amarillo del modelo. */
+.brand__ring {
+  stroke: var(--mark-model);
+}
+
+.brand__animal {
+  fill: var(--hud-ink);
 }
 
 .brand__name {

@@ -1,6 +1,8 @@
 /**
- * Marca de HatoScan: la retícula del visor con una detección en el centro (el círculo amarillo de
- * las propuestas del modelo). Es la misma figura que el revisor ve sobre la foto.
+ * Marca de HatoScan: el visor del dron (las cuatro esquinas del encuadre) con una detección en el
+ * centro, el anillo amarillo del modelo alrededor de un animal visto desde arriba. Es lo que el
+ * revisor ve sobre la foto. Misma figura que el favicon (`scripts/generate-icons.mjs`); aquí los
+ * colores salen de los tokens.
  */
 export function BrandMark({ size = 28 }: { size?: number }) {
   return (
@@ -9,27 +11,27 @@ export function BrandMark({ size = 28 }: { size?: number }) {
       width={size}
       height={size}
       viewBox="0 0 32 32"
-      fill="none"
       aria-hidden="true"
       focusable="false"
     >
-      <rect
-        x="1.25"
-        y="1.25"
-        width="29.5"
-        height="29.5"
-        rx="8"
-        stroke="currentColor"
-        strokeWidth="1.5"
-        opacity="0.28"
-      />
+      <rect className="brand__tile" x="0.5" y="0.5" width="31" height="31" rx="7.25" />
       <path
-        d="M16 4.5v5M16 22.5v5M4.5 16h5M22.5 16h5"
-        stroke="currentColor"
-        strokeWidth="2"
+        className="brand__frame"
+        d="M6.5 11.5V6.5h5M20.5 6.5h5v5M25.5 20.5v5h-5M11.5 25.5h-5v-5"
+        fill="none"
+        strokeWidth="1.75"
         strokeLinecap="round"
+        strokeLinejoin="round"
       />
-      <circle className="brand__target" cx="16" cy="16" r="4.75" strokeWidth="1.75" />
+      <circle className="brand__ring" cx="16" cy="16" r="5.4" fill="none" strokeWidth="2.1" />
+      <ellipse
+        className="brand__animal"
+        cx="16"
+        cy="16"
+        rx="2.5"
+        ry="1.45"
+        transform="rotate(-30 16 16)"
+      />
     </svg>
   );
 }

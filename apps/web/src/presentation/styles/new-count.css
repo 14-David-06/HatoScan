@@ -128,23 +128,9 @@
 /* Esquinas de visor: el marco donde caerá la foto. */
 .upload-zone__corners {
   --corner: var(--hud-ink-muted);
-  --corner-len: 1.25rem;
-  --corner-w: 2px;
 
-  position: absolute;
   inset: var(--space-5);
-  background:
-    linear-gradient(var(--corner), var(--corner)) top left / var(--corner-len) var(--corner-w),
-    linear-gradient(var(--corner), var(--corner)) top left / var(--corner-w) var(--corner-len),
-    linear-gradient(var(--corner), var(--corner)) top right / var(--corner-len) var(--corner-w),
-    linear-gradient(var(--corner), var(--corner)) top right / var(--corner-w) var(--corner-len),
-    linear-gradient(var(--corner), var(--corner)) bottom left / var(--corner-len) var(--corner-w),
-    linear-gradient(var(--corner), var(--corner)) bottom left / var(--corner-w) var(--corner-len),
-    linear-gradient(var(--corner), var(--corner)) bottom right / var(--corner-len) var(--corner-w),
-    linear-gradient(var(--corner), var(--corner)) bottom right / var(--corner-w) var(--corner-len);
-  background-repeat: no-repeat;
   opacity: 0.55;
-  pointer-events: none;
   transition:
     opacity var(--dur-3) var(--ease-emphasized),
     transform var(--dur-3) var(--ease-emphasized);

@@ -714,3 +714,28 @@
   max-width: 34rem;
   color: var(--ink-muted);
 }
+
+/* ---------- Esquinas de visor ---------- */
+
+/*
+ * Las cuatro esquinas del encuadre del dron: el motivo de la marca. Quien las usa pone la posición
+ * (`inset`) y, si quiere, el color, el largo y el grosor.
+ */
+.viewfinder-corners {
+  --corner: var(--hud-ink);
+  --corner-len: 1.25rem;
+  --corner-w: 2px;
+
+  position: absolute;
+  background:
+    linear-gradient(var(--corner), var(--corner)) top left / var(--corner-len) var(--corner-w),
+    linear-gradient(var(--corner), var(--corner)) top left / var(--corner-w) var(--corner-len),
+    linear-gradient(var(--corner), var(--corner)) top right / var(--corner-len) var(--corner-w),
+    linear-gradient(var(--corner), var(--corner)) top right / var(--corner-w) var(--corner-len),
+    linear-gradient(var(--corner), var(--corner)) bottom left / var(--corner-len) var(--corner-w),
+    linear-gradient(var(--corner), var(--corner)) bottom left / var(--corner-w) var(--corner-len),
+    linear-gradient(var(--corner), var(--corner)) bottom right / var(--corner-len) var(--corner-w),
+    linear-gradient(var(--corner), var(--corner)) bottom right / var(--corner-w) var(--corner-len);
+  background-repeat: no-repeat;
+  pointer-events: none;
+}

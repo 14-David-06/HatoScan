@@ -232,7 +232,7 @@ export function PhotoDropzone({ name, disabled, scanning, readout }: PhotoDropzo
             )
           ) : (
             <label htmlFor={inputId} className="upload-zone__prompt">
-              <span className="upload-zone__corners" aria-hidden="true" />
+              <span className="viewfinder-corners upload-zone__corners" aria-hidden="true" />
               <span className="upload-zone__badge" aria-hidden="true">
                 <UploadIcon size={22} />
               </span>

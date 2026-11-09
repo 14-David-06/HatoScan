@@ -449,28 +449,62 @@
   gap: var(--space-4);
 }
 
-.counts-empty__art {
-  max-width: 100%;
-  height: auto;
+/* Potrero vacío en el visor: una sola pasada de la línea, sin nada que marcar. */
+.counts-empty__visor {
+  position: relative;
+  width: min(100%, 20rem);
+  aspect-ratio: 16 / 10;
   margin-bottom: var(--space-2);
+  overflow: hidden;
+  border-radius: var(--radius-lg);
+  background: var(--viewport);
+  box-shadow: inset 0 0 0 1px var(--viewport-line);
 }
 
-.counts-empty__contours {
-  stroke: var(--ink-faint);
+/* Un poco hacia arriba: entra la palma de la esquina y el camino. */
+.counts-empty__photo {
+  object-fit: cover;
+  object-position: 50% 25%;
 }
 
-.counts-empty__reticle {
-  stroke: var(--ink);
+.counts-empty__sweep {
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: 0;
+  height: 30%;
+  border-bottom: 2px solid var(--mark-model);
+  background: linear-gradient(transparent, rgb(255 212 0 / 0.14));
+  box-shadow: 0 6px 16px -6px rgb(255 212 0 / 0.7);
+  opacity: 0;
+  animation: counts-empty-sweep 2.6s ease-in-out 500ms both;
 }
 
-/* El marco del visor tapa las curvas que pasan por debajo, como una lente. */
-.counts-empty__frame {
-  fill: color-mix(in srgb, var(--surface) 82%, transparent);
-  stroke-opacity: 0.45;
+@keyframes counts-empty-sweep {
+  0% {
+    opacity: 1;
+    transform: translateY(-100%);
+  }
+
+  90% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0;
+    transform: translateY(calc(100% / 0.3 - 100%));
+  }
 }
 
-.counts-empty__target {
-  fill: var(--mark-model);
+.counts-empty__corners {
+  inset: var(--space-3);
+  opacity: 0.85;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .counts-empty__sweep {
+    animation: none;
+  }
 }
 
 .counts-empty .button {

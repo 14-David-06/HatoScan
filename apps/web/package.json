@@ -11,7 +11,9 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "hash-password": "node scripts/hash-password.ts"
+    "hash-password": "node scripts/hash-password.ts",
+    "icons": "node scripts/generate-icons.mjs",
+    "imagery": "node scripts/imagery.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^1.6.0",
