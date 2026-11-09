@@ -29,3 +29,7 @@ Thumbs.db
 
 # Datos de los adaptadores locales (imágenes, JSON, registro de conteos)
 .data/
+
+# Estado local de las herramientas de Claude Code (sesiones, locks)
+.claude/autoharness/
+.claude/settings.local.json
