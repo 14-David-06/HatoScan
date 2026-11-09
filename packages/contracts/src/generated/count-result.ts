@@ -7,7 +7,7 @@ export const CountResultSchema = z
     detector_version: z
       .string()
       .regex(new RegExp('^[a-z0-9][a-z0-9-]*@[0-9]+[.][0-9]+[.][0-9]+$'))
-      .describe("Nombre y versión semántica, ej. 'classic-cv@1.0.0'."),
+      .describe("Nombre y versión semántica, ej. 'claude-vision@0.3.0'."),
     params: z.record(z.string(), z.unknown()),
     params_hash: z
       .string()

@@ -1,6 +1,7 @@
 # 0006 — Despliegue en Vercel con imágenes en S3 privado
 
-- Estado: aceptada
+- Estado: aceptada. El proyecto de Vercel del detector, su token y su lista de hosts los reemplaza el
+  ADR 0007: la detección corre en la app web.
 - Fecha: 2026-11-04
 
 ## Contexto

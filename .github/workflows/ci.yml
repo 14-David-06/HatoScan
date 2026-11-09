@@ -24,19 +24,3 @@ jobs:
       - run: npm run build
         env:
           NEXT_TELEMETRY_DISABLED: '1'
-
-  detector:
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: services/detector
-    steps:
-      - uses: actions/checkout@v4
-      - uses: astral-sh/setup-uv@v6
-      - run: uv sync --frozen
-      - name: Contratos Python al día
-        run: sh scripts/generate_contracts.sh && git diff --exit-code app/contracts
-      - run: uv run ruff check .
-      - run: uv run ruff format --check .
-      - run: uv run mypy app tests
-      - run: uv run pytest

@@ -23,7 +23,6 @@ async function pendingReview() {
     results,
     detector: detectorReturning([modelDetection('a'), modelDetection('b')]),
     storage: new FakeStorage(),
-    imageUrlTtlSeconds: 900,
   }).execute({ countId: COUNT_ID });
   const useCase = new ReviewCount({ counts, results, clock: fixedClock('2026-09-21T10:00:00Z') });
   return { counts, results, useCase };
@@ -49,7 +48,7 @@ describe('ReviewCount', () => {
     expect(count.officialTotal).toBe(3);
     expect(count.review?.reviewerId).toBe(REVIEWER);
     const stored = results.reviews.get(count.review?.resultKey ?? '');
-    expect(stored?.sourceDetectorVersion).toBe('classic-cv@0.1.0');
+    expect(stored?.sourceDetectorVersion).toBe('claude-vision@0.3.0');
     expect(stored?.detections).toHaveLength(4);
   });
 

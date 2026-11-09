@@ -1,6 +1,6 @@
 import { InvalidValueError } from '../errors';
 
-/** Versión del detector que produjo una propuesta, ej. `classic-cv@1.0.0` + hash de parámetros. */
+/** Versión del detector que produjo una propuesta, ej. `claude-vision@0.3.0` + hash de parámetros. */
 export interface DetectorVersion {
   /** `nombre@MAJOR.MINOR.PATCH` */
   readonly version: string;

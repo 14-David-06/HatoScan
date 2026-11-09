@@ -1,6 +1,7 @@
 # 0005 — Elección del método de detección y volver a detectar
 
-- Estado: aceptada
+- Estado: aceptada. Desde el ADR 0007 el catálogo no se publica por HTTP: lo arma
+  `InProcessDetector` en la app, y añadir un método solo toca `apps/web/src/infrastructure/detector`.
 - Fecha: 2026-10-05
 
 ## Contexto

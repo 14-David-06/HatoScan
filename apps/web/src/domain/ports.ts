@@ -4,7 +4,7 @@ import type { CountId, PersonId } from './count/count-id';
 import type { Detection, ImageSize } from './count/detection';
 import type { DetectorVersion } from './count/detector-version';
 
-/** Resultado de una detección, independiente de la implementación (visión clásica, YOLO, ...). */
+/** Resultado de una detección, independiente de la implementación (Claude, OpenAI, un modelo propio, ...). */
 export interface DetectionOutput {
   readonly detector: DetectorVersion;
   readonly params: Readonly<Record<string, unknown>>;
@@ -15,15 +15,15 @@ export interface DetectionOutput {
 
 export interface DetectInput {
   readonly countId: CountId;
-  /** URL de lectura temporal de la imagen original, a resolución completa. */
-  readonly imageUrl: string;
+  /** Bytes de la imagen original, a resolución completa: nunca se reduce antes de detectar. */
+  readonly image: Uint8Array;
   readonly detector?: string;
   readonly params?: Readonly<Record<string, unknown>>;
 }
 
-/** Un método de detección que ofrece el servicio (visión clásica, YOLO, ...). */
+/** Un método de detección que se puede elegir (Claude, OpenAI, ...). */
 export interface DetectionMethod {
-  /** Nombre estable, ej. `classic-cv`. */
+  /** Nombre estable, ej. `claude-vision`. */
   readonly name: string;
   readonly version: string;
   readonly label: string;

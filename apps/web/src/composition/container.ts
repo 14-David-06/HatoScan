@@ -17,7 +17,8 @@ import { ScryptPasswordHasher } from '@/infrastructure/auth/scrypt-password-hash
 import { signSession, verifySession } from '@/infrastructure/auth/session-token';
 import { getEnv, type Env } from '@/infrastructure/config/env';
 import { JsonFileCountRepository } from '@/infrastructure/counts/json-file-count-repository';
-import { HttpDetector } from '@/infrastructure/detector/http-detector';
+import { createDetectionMethods, enabledMethods } from '@/infrastructure/detector/catalog';
+import { InProcessDetector } from '@/infrastructure/detector/in-process-detector';
 import { ObjectStorageResultStore } from '@/infrastructure/results/object-storage-result-store';
 import { LocalFsObjectStorage } from '@/infrastructure/storage/local-fs-object-storage';
 import { S3ObjectStorage } from '@/infrastructure/storage/s3-object-storage';
@@ -33,10 +34,17 @@ function createContainer() {
   const clock: Clock = { now: () => new Date() };
   const { storage, localFiles, counts } = createStores(env);
   const results = new ObjectStorageResultStore(storage);
-  const detector = new HttpDetector({
-    baseUrl: env.DETECTOR_BASE_URL,
+  // Detección dentro de la app, con modelos de IA por API (ADR 0007).
+  const detector = new InProcessDetector({
+    methods: enabledMethods(
+      createDetectionMethods({
+        anthropicApiKey: env.ANTHROPIC_API_KEY,
+        openaiApiKey: env.OPENAI_API_KEY,
+      }),
+      env.DETECTOR_ENABLED_METHODS,
+    ),
+    defaultMethod: env.DETECTOR_DEFAULT_METHOD,
     timeoutMs: env.DETECTOR_TIMEOUT_MS,
-    getAuthToken: () => Promise.resolve(env.DETECTOR_API_TOKEN),
   });
   const imageUrlTtlSeconds = env.IMAGE_URL_TTL_SECONDS;
   const users = new AirtableUserDirectory({
@@ -54,7 +62,7 @@ function createContainer() {
     listFarms: new ListFarms(counts),
     listDetectionMethods: new ListDetectionMethods(detector),
     getCountDetail: new GetCountDetail({ counts, results, storage, imageUrlTtlSeconds }),
-    processCount: new ProcessCount({ counts, detector, storage, results, imageUrlTtlSeconds }),
+    processCount: new ProcessCount({ counts, detector, storage, results }),
     reviewCount: new ReviewCount({ counts, results, clock }),
     authenticateUser: new AuthenticateUser({ users, passwords: new ScryptPasswordHasher() }),
     loginAttempts: new LoginRateLimiter(),

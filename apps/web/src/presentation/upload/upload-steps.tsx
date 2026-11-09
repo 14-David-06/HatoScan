@@ -12,7 +12,7 @@ interface UploadStepsProps {
   readonly active: UploadStep;
   /** Bytes enviados de la subida en curso; `null` antes del primer aviso del navegador. */
   readonly upload: TransferProgress | null;
-  /** Nombre del método elegido; `null` si se usa el predeterminado del servicio. */
+  /** Nombre del método elegido; `null` si se usa el predeterminado. */
   readonly method: string | null;
   /** Tiempo que lleva (o llevó) la detección. */
   readonly detectMs: number;

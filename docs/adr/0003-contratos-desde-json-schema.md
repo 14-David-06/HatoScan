@@ -1,6 +1,7 @@
 # 0003 — Contratos generados desde JSON Schema
 
-- Estado: aceptada
+- Estado: aceptada. El generador Python y el contrato `DetectRequest` se retiraron en el ADR 0007; los
+  JSON Schema siguen siendo la fuente de verdad de los validadores Zod.
 - Fecha: 2026-09-24
 
 ## Contexto

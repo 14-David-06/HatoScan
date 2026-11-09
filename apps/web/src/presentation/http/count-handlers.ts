@@ -75,7 +75,7 @@ export function createCountHandler(registerCount: RegisterCount) {
 
 /**
  * `POST /api/counts/{id}/process` (JSON opcional `{ detector }`): corre el método elegido, o el
- * predeterminado del servicio. Un fallo deja el conteo en `error`.
+ * predeterminado. Un fallo deja el conteo en `error`.
  */
 export function processCountHandler(processCount: ProcessCount) {
   return (request: Request, id: string): Promise<Response> =>

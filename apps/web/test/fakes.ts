@@ -19,7 +19,7 @@ import {
 } from '@/domain/index';
 
 export const COUNT_ID = toCountId('SIRIUS-CONTEO-0001');
-export const DETECTOR = toDetectorVersion('classic-cv@0.1.0', 'a'.repeat(64));
+export const DETECTOR = toDetectorVersion('claude-vision@0.3.0', 'a'.repeat(64));
 export const IMAGE = { width: 1000, height: 800 } as const;
 
 export function newCount(): Count {
@@ -92,12 +92,12 @@ export class FakeDetector implements Detector {
 
   methods(): Promise<DetectionMethodCatalog> {
     return Promise.resolve({
-      defaultMethod: 'classic-cv',
+      defaultMethod: 'claude-vision',
       methods: [
         {
-          name: 'classic-cv',
-          version: '0.2.0',
-          label: 'Visión clásica',
+          name: 'claude-vision',
+          version: '0.3.0',
+          label: 'IA · Claude',
           description: 'Prueba',
           available: true,
         },
@@ -123,8 +123,12 @@ export class FakeStorage implements ObjectStorage {
     this.objects.set(key, { size: body.byteLength, contentType });
     return Promise.resolve();
   }
-  get(): Promise<Uint8Array> {
-    return Promise.reject(new Error('not used'));
+  /** Bytes deterministas por clave: cada objeto "contiene" su propia clave. */
+  static bytesOf(key: string): Uint8Array {
+    return new TextEncoder().encode(key);
+  }
+  get(key: string): Promise<Uint8Array> {
+    return Promise.resolve(FakeStorage.bytesOf(key));
   }
   getReadUrl(key: string): Promise<string> {
     return Promise.resolve(`https://storage.test/${key}?signed`);

@@ -7,7 +7,7 @@ export const IMAGE_EXTENSIONS: Readonly<Record<string, string>> = {
   'image/tiff': 'tif',
 };
 
-/** Fotos de dron de 10–30 MB; margen para mosaicos. Igual que `DETECTOR_MAX_IMAGE_BYTES`. */
+/** Fotos de dron de 10–30 MB; margen para mosaicos. La detección lee la foto entera en memoria. */
 export const MAX_IMAGE_BYTES = 80 * 1024 * 1024;
 
 /** Las subidas sin conteo viven aquí hasta registrarlo; el bucket las borra a las 24 h. */

@@ -53,6 +53,3 @@ if [ "$KEYS" = "0" ]; then
 else
   echo "$USER_NAME ya tiene llave; no se crea otra."
 fi
-
-echo
-echo "Detector (Vercel): DETECTOR_ALLOWED_IMAGE_HOSTS=[\"$BUCKET.s3.$REGION.amazonaws.com\"]"

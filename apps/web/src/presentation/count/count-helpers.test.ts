@@ -23,12 +23,12 @@ describe('reviewKey', () => {
   it('is stable for the same proposal', () => {
     const a = reviewKey({
       status: 'pendiente_revision',
-      detectorVersion: 'classic-cv@1.0.0',
+      detectorVersion: 'claude-vision@0.3.0',
       detections: proposal,
     });
     const b = reviewKey({
       status: 'pendiente_revision',
-      detectorVersion: 'classic-cv@1.0.0',
+      detectorVersion: 'claude-vision@0.3.0',
       detections: proposal.map((d) => ({ ...d })),
     });
     expect(a).toBe(b);
@@ -37,7 +37,7 @@ describe('reviewKey', () => {
   it('changes when detecting again yields another proposal with the same status', () => {
     const before = reviewKey({
       status: 'pendiente_revision',
-      detectorVersion: 'classic-cv@1.0.0',
+      detectorVersion: 'claude-vision@0.3.0',
       detections: proposal,
     });
     const otherMethod = reviewKey({
@@ -47,7 +47,7 @@ describe('reviewKey', () => {
     });
     const otherMarks = reviewKey({
       status: 'pendiente_revision',
-      detectorVersion: 'classic-cv@1.0.0',
+      detectorVersion: 'claude-vision@0.3.0',
       detections: [mark('d1', 10, 20), mark('d2', 31, 40)],
     });
     expect(otherMethod).not.toBe(before);

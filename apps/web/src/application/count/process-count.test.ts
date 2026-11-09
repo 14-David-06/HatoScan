@@ -20,7 +20,6 @@ function setup(detector: FakeDetector) {
     detector,
     results,
     storage: new FakeStorage(),
-    imageUrlTtlSeconds: 900,
   });
   return { counts, results, useCase };
 }
@@ -40,18 +39,20 @@ describe('ProcessCount', () => {
     expect(count.officialTotal).toBeUndefined();
     expect(results.models.has(count.model?.resultKey ?? '')).toBe(true);
     expect(counts.saved.map((c) => c.status)).toEqual(['procesando', 'pendiente_revision']);
-    expect(detector.calls[0]?.imageUrl).toContain('original.jpg');
+    expect(detector.calls[0]?.image).toEqual(
+      FakeStorage.bytesOf('counts/SIRIUS-CONTEO-0001/original.jpg'),
+    );
   });
 
   it('marks the count as error with the message when the detector fails', async () => {
     const { counts, useCase } = setup(
-      new FakeDetector(() => Promise.reject(new Error('Cloud Run 503'))),
+      new FakeDetector(() => Promise.reject(new Error('Claude API error 529'))),
     );
 
     const count = await useCase.execute({ countId: COUNT_ID });
 
     expect(count.status).toBe('error');
-    expect(count.errorMessage).toContain('Cloud Run 503');
+    expect(count.errorMessage).toContain('Claude API error 529');
     expect(counts.saved.map((c) => c.status)).toEqual(['procesando', 'error']);
   });
 
@@ -73,10 +74,10 @@ describe('ProcessCount', () => {
     const { counts, useCase } = setup(detector);
     await useCase.execute({ countId: COUNT_ID });
 
-    const again = await useCase.execute({ countId: COUNT_ID, detector: 'classic-cv-dark' });
+    const again = await useCase.execute({ countId: COUNT_ID, detector: 'claude-vision-sonnet' });
 
     expect(again.status).toBe('pendiente_revision');
-    expect(detector.calls.map((c) => c.detector)).toEqual([undefined, 'classic-cv-dark']);
+    expect(detector.calls.map((c) => c.detector)).toEqual([undefined, 'claude-vision-sonnet']);
     expect(counts.saved.map((c) => c.status)).toEqual([
       'procesando',
       'pendiente_revision',
@@ -89,8 +90,11 @@ describe('ProcessCount', () => {
     let attempt = 0;
     const detector = new FakeDetector(() =>
       ++attempt === 1
-        ? Promise.reject(new Error('Cloud Run 503'))
-        : detectorReturning([modelDetection('a')]).detect({ countId: COUNT_ID, imageUrl: '' }),
+        ? Promise.reject(new Error('Claude API error 529'))
+        : detectorReturning([modelDetection('a')]).detect({
+            countId: COUNT_ID,
+            image: new Uint8Array(),
+          }),
     );
     const { useCase } = setup(detector);
     expect((await useCase.execute({ countId: COUNT_ID })).status).toBe('error');
@@ -106,7 +110,6 @@ describe('ProcessCount', () => {
       detector: detectorReturning([]),
       results: new InMemoryResults(),
       storage: new FakeStorage(),
-      imageUrlTtlSeconds: 900,
     });
     await expect(useCase.execute({ countId: COUNT_ID })).rejects.toThrow(CountNotFoundError);
   });

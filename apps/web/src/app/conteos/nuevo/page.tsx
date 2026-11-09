@@ -15,7 +15,7 @@ export default async function Page() {
   if (!canReview(await requireUser('/conteos/nuevo'))) redirect('/conteos');
   const container = getContainer();
   const [catalog, farms] = await Promise.all([
-    // Si el servicio de detección no responde, la carga sigue siendo posible.
+    // Si la lista de métodos falla, la carga sigue siendo posible con el predeterminado.
     container.listDetectionMethods.execute().catch(() => null),
     container.listFarms.execute(),
   ]);

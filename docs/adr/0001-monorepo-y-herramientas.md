@@ -1,6 +1,7 @@
 # 0001 — Monorepo y herramientas
 
-- Estado: aceptada
+- Estado: aceptada. La parte de Python (`uv`, `services/detector`) quedó sin efecto por el ADR 0007:
+  el repo es solo TypeScript.
 - Fecha: 2026-09-24
 
 ## Contexto

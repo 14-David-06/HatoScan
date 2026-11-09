@@ -16,8 +16,8 @@ interface MethodSelectProps {
 /**
  * Selector del método de detección: una línea por método y, debajo de la lista, la descripción
  * del elegido (así las opciones no se mueven al cambiar y caben en una columna estrecha). Los
- * métodos no disponibles se ven pero no se pueden elegir. Si el servicio no respondió, explica que
- * se usará su predeterminado (valor vacío).
+ * métodos no disponibles se ven pero no se pueden elegir. Si no se pudo leer la lista, explica que
+ * se usará el predeterminado (valor vacío).
  */
 export function MethodSelect({ name, catalog, value, onChange, disabled }: MethodSelectProps) {
   const ownName = useId();
@@ -29,10 +29,7 @@ export function MethodSelect({ name, catalog, value, onChange, disabled }: Metho
         <p className="method-select__legend">Método de detección</p>
         <div className="callout">
           <InfoIcon size={16} />
-          <p>
-            No se pudo consultar la lista de métodos. Se usará el método predeterminado del servicio
-            de detección.
-          </p>
+          <p>No se pudo consultar la lista de métodos. Se usará el método predeterminado.</p>
         </div>
       </div>
     );
@@ -76,7 +73,7 @@ export function MethodSelect({ name, catalog, value, onChange, disabled }: Metho
                 </span>
                 {!m.available && (
                   <span className="method-option__desc" id={descriptionId}>
-                    No disponible por ahora en el servicio de detección.
+                    No disponible: falta configurar la llave de su proveedor de IA.
                   </span>
                 )}
               </span>
@@ -95,7 +92,7 @@ export function MethodSelect({ name, catalog, value, onChange, disabled }: Metho
       {noneAvailable && (
         <div className="callout callout--danger" role="alert">
           <AlertTriangleIcon size={16} />
-          <p>Ningún método está disponible ahora. Revisa el servicio de detección.</p>
+          <p>Ningún método está disponible: faltan las llaves de IA en el servidor.</p>
         </div>
       )}
     </fieldset>
@@ -113,7 +110,7 @@ export function useMethod(catalog: DetectionMethodsView) {
   return useState(() => initialMethod(catalog));
 }
 
-/** Nombre legible del método elegido, para los mensajes de progreso; `null` si es el del servicio. */
+/** Nombre legible del método elegido, para los mensajes de progreso; `null` si es el predeterminado. */
 export function methodLabel(catalog: DetectionMethodsView, value: string): string | null {
   return catalog?.methods.find((m) => m.name === value)?.label ?? null;
 }

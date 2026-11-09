@@ -25,7 +25,6 @@ function setup() {
     results,
     storage,
     detector: detectorReturning([modelDetection('a'), modelDetection('b')]),
-    imageUrlTtlSeconds: 600,
   });
   const review = new ReviewCount({ counts, results, clock: fixedClock('2026-10-02T10:00:00Z') });
   return { detail, process, review };

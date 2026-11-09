@@ -16,8 +16,6 @@ export interface ProcessCountDeps {
   readonly detector: Detector;
   readonly storage: ObjectStorage;
   readonly results: DetectionResultStore;
-  /** Vigencia de la URL de lectura que recibe el detector. */
-  readonly imageUrlTtlSeconds: number;
 }
 
 export interface ProcessCountInput {
@@ -34,7 +32,7 @@ export class ProcessCount {
   constructor(private readonly deps: ProcessCountDeps) {}
 
   async execute(input: ProcessCountInput): Promise<Count> {
-    const { counts, detector, storage, results, imageUrlTtlSeconds } = this.deps;
+    const { counts, detector, storage, results } = this.deps;
 
     const count = await counts.findById(input.countId);
     if (!count) throw new CountNotFoundError(input.countId);
@@ -43,10 +41,10 @@ export class ProcessCount {
     await counts.save(processing);
 
     try {
-      const imageUrl = await storage.getReadUrl(processing.originalImageKey, imageUrlTtlSeconds);
+      const image = await storage.get(processing.originalImageKey);
       const output = await detector.detect({
         countId: processing.id,
-        imageUrl,
+        image,
         ...(input.detector !== undefined && { detector: input.detector }),
         ...(input.params !== undefined && { params: input.params }),
       });
