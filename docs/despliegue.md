@@ -114,11 +114,11 @@ propio. No crea llaves nuevas si el usuario ya tiene una.
 
 ## 3. Rama de producción
 
-Vercel despliega a producción la rama por defecto del repo (hoy `chore/monorepo-scaffold`). Hay
-dos caminos:
+La rama principal es `main`: es la rama por defecto del repo en GitHub, la que revisa CI y la que
+Vercel despliega a producción. El trabajo entra a `main` con un PR desde una rama por tarea.
 
-- Integra el trabajo en esa rama con un PR.
-- O cambia la rama en **Settings → Environments → Production → Branch Tracking**.
+Si Vercel muestra otra rama de producción, cámbiala en **Settings → Environments → Production →
+Branch Tracking**.
 
 ## 4. Prueba de humo
 
